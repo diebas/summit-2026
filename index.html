@@ -6,7 +6,7 @@
 <title>Mapa del evento en Las Carretas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
 <style id="css">
 :root{
   /* Mapa a pantalla completa; panel de monte oscuro a la izquierda (abajo en celular); acento ocre de las paredes de la casona */
@@ -103,7 +103,7 @@ input:focus,textarea:focus{outline:2px solid var(--ochre);outline-offset:0;borde
 .status{margin:0;font-size:12.5px;color:var(--mist);min-height:1.2em}
 
 #hud{position:fixed;right:16px;top:16px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:4}
-#compass{width:46px;height:46px;border-radius:50%;background:rgba(255,253,247,.94);box-shadow:0 2px 10px rgba(20,30,25,.25);display:grid;place-items:center;border:0;cursor:pointer;padding:0}
+#compass,#daynight{width:46px;height:46px;border-radius:50%;background:rgba(255,253,247,.94);box-shadow:0 2px 10px rgba(20,30,25,.25);display:grid;place-items:center;border:0;cursor:pointer;padding:0}
 #compass svg{width:34px;height:34px;transition:transform .05s linear}
 .views{display:flex;background:rgba(255,253,247,.94);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,25,.25);overflow:hidden}
 .views button{border:0;background:transparent;padding:9px 13px;font:600 13px/1 var(--body);color:#26322b;cursor:pointer}
@@ -126,7 +126,7 @@ button,.pin,.zone{touch-action:manipulation;-webkit-tap-highlight-color:transpar
   #placebar{top:auto;bottom:calc(58% + 12px);font-size:13px;max-width:calc(100% - 24px);white-space:normal}
   #hint{display:none}
   #hud{right:10px;top:10px;flex-direction:row-reverse;align-items:center;gap:8px}
-  #compass{width:40px;height:40px}
+  #compass,#daynight{width:40px;height:40px}
   .views button{padding:10px 12px}
   #panel.closed #selcard:not([hidden]){display:grid}
   #selcard{grid-template-columns:30px 1fr auto;gap:10px;align-items:start;margin:0 12px 12px;padding:12px;border-radius:12px;background:var(--forest-2)}
@@ -144,6 +144,36 @@ button,.pin,.zone{touch-action:manipulation;-webkit-tap-highlight-color:transpar
   .compact .place.minor{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+#daynight svg{width:24px;height:24px;color:#26322b}
+#daynight .moon{display:none}
+/* ===== Modo noche: el predio de noche, guirnaldas y neón ===== */
+body.night{--forest:#140d2b;--forest-2:#24184a;--paper:#f4efff;--mist:#a99fd0;--ochre:#ff4fb3;color-scheme:dark;background:#070b1a}
+body.night #daynight .sun{display:none}
+body.night #daynight .moon{display:block;color:#ffd35a}
+body.night #panel{background:rgba(16,10,38,.84);border:1px solid rgba(255,79,179,.35);box-shadow:0 0 0 1px rgba(45,226,230,.12),0 0 40px rgba(255,79,179,.18),0 18px 50px rgba(0,0,0,.6)}
+body.night h1{font-family:"Unbounded","Arial Black",system-ui,sans-serif;font-weight:800;letter-spacing:-.01em;background:linear-gradient(90deg,#ff4fb3,#ffd35a 55%,#2de2e6);-webkit-background-clip:text;background-clip:text;color:transparent}
+body.night .eyebrow,body.night .sec{color:#2de2e6;text-shadow:0 0 8px rgba(45,226,230,.6)}
+body.night .item:hover,body.night .item.on{background:rgba(255,79,179,.12)}
+body.night .num{box-shadow:0 0 10px var(--c),0 0 2px #fff inset}
+body.night .sq{box-shadow:0 0 10px var(--c)}
+body.night .btn{border-color:rgba(255,255,255,.22)}
+body.night .place{color:#d9e4ff;text-shadow:0 0 6px rgba(120,150,255,.9),0 0 14px rgba(60,80,200,.7);font-weight:700}
+body.night .place.big{color:#ffd35a;text-shadow:0 0 8px rgba(255,190,60,.9),0 0 18px rgba(255,140,0,.6)}
+body.night .place.water{color:#7ff3ff;text-shadow:0 0 8px rgba(45,226,230,.9)}
+body.night .place.road{color:#c9c6e0}
+body.night .pin{background:#140d2b;color:#fff;border:1.5px solid var(--c);box-shadow:0 0 12px var(--c)}
+body.night .pin::after{background:#140d2b;border-right:1.5px solid var(--c);border-bottom:1.5px solid var(--c)}
+body.night .pin b{box-shadow:0 0 8px var(--c)}
+body.night .pin.on{box-shadow:0 0 0 3px var(--c),0 0 22px var(--c)}
+body.night .zone{background:rgba(10,6,28,.72);background-image:none;color:#fff;border:1.5px solid var(--c);box-shadow:0 0 12px var(--c);text-shadow:0 0 8px var(--c);font-family:"Unbounded",system-ui,sans-serif;font-weight:700}
+body.night .views,body.night #compass,body.night #daynight{background:rgba(16,10,38,.86);border:1px solid rgba(255,255,255,.18)}
+body.night .views button{color:#e8e2ff}
+body.night .views button[aria-pressed=true]{background:linear-gradient(90deg,#ff4fb3,#a34dff);color:#fff}
+body.night #compass svg path:last-child{fill:#5b5680}
+body.night #hint,body.night #loading{background:rgba(16,10,38,.86);color:#cfc8ef;border:1px solid rgba(255,255,255,.15)}
+body.night #loading{background:transparent;border:0}
+body.night input[type=text],body.night textarea{background:#0b0720}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -347,7 +377,7 @@ var EDIT = false; /* versión pública: solo lectura */
 var PAGE_TITLE = "Mapa del evento en Las Carretas";
 var THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
 var ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
-var FONT_URL = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap";
+var FONT_URL = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&family=Unbounded:wght@700;800&display=swap";
 var PALETTE = ["#d9482b","#e2b445","#2f7fbf","#7b4fb5","#2f9e6b","#e07a1f","#c2357a","#3b4a54"];
 var REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -361,7 +391,7 @@ document.body.insertAdjacentHTML("afterbegin",
  ' <div id="scroll"></div>'+
  ' <p class="foot">Establecimiento Las Carretas · Ruta 36, Melilla<br>Modelo aproximado, hecho a partir de la vista satelital y fotos del lugar.</p>'+
  '</aside>'+
- '<div id="hud"><button id="compass" title="Volver al norte" aria-label="Orientar al norte"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 L22 17 L17 15 L12 17 Z" fill="#a8452f"/><path d="M17 31 L22 17 L17 19 L12 17 Z" fill="#9aa59f"/><text x="17" y="12.5" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="Figtree,sans-serif">N</text></svg></button>'+
+ '<div id="hud"><button id="daynight" type="button" aria-pressed="false" title="Cambiar a noche" aria-label="Modo noche"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg></button><button id="compass" title="Volver al norte" aria-label="Orientar al norte"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 L22 17 L17 15 L12 17 Z" fill="#a8452f"/><path d="M17 31 L22 17 L17 19 L12 17 Z" fill="#9aa59f"/><text x="17" y="12.5" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="Figtree,sans-serif">N</text></svg></button>'+
  ' <div class="views" role="group" aria-label="Vista"><button data-view="3d" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Plano</button></div></div>'+
  '<div id="placebar" hidden role="status"><span id="pb-text"></span><span class="pbb" id="pb-btns"></span></div>'+
  '<div id="hint">Arrastrá para girar · rueda o pellizco para acercar</div>');
@@ -434,7 +464,7 @@ controls.target.set(HOME.t[0],HOME.t[1],HOME.t[2]);
 camera.position.set(HOME.p[0],HOME.p[1],HOME.p[2]);
 if (MOBILE && THREE.TOUCH){ controls.touches = {ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE}; controls.panSpeed=1.1; }
 
-scene.add(new THREE.HemisphereLight(0xe6f1f7, 0x56663a, 0.62));
+var hemi = new THREE.HemisphereLight(0xe6f1f7, 0x56663a, 0.62); scene.add(hemi);
 var sun = new THREE.DirectionalLight(0xfff1d6, 0.9);
 sun.position.set(-70,150,-110); /* sol del norte: hemisferio sur */
 sun.target.position.set(15,0,-10);
@@ -848,6 +878,46 @@ carreta(-27,-31,-0.3);
     g.position.set(sd*FIELD.len/2,0,0);
     var holder=new THREE.Group(); holder.add(g); holder.position.set(FIELD.cx,0,FIELD.cz); holder.rotation.y=FIELD.rot; scene.add(holder);
   });
+})();
+
+/* ---------- modo noche ---------- */
+var NIGHT = (function(){
+  var g=new THREE.Group(); g.visible=false; scene.add(g);
+  var lights=[[2,6,0,0xffb35a,1.6,70],[30,6,0,0xff7a3d,1.4,60],[38,6,-30,0xff4fb3,1.2,55],[-18,6,-55,0x2de2e6,1.0,60],[52,5,36,0xffd35a,1.0,40]].map(function(l){
+    var pl=new THREE.PointLight(l[3], 0, l[5], 1.6); pl.position.set(l[0],l[1],l[2]); pl.userData.i=l[4]; scene.add(pl); return pl; });
+  var bulbGeo=new THREE.SphereGeometry(.18,8,6), mats=[0xffd35a,0xffb35a,0xff7ad1,0x7ff3ff,0xfff1c9].map(function(c){ return new THREE.MeshBasicMaterial({color:c}); });
+  var halo=new THREE.SpriteMaterial({map:(function(){ var cv=document.createElement("canvas"); cv.width=cv.height=64; var c=cv.getContext("2d"); var gr=c.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,"rgba(255,220,150,.9)"); gr.addColorStop(.35,"rgba(255,180,90,.35)"); gr.addColorStop(1,"rgba(255,160,60,0)"); c.fillStyle=gr; c.fillRect(0,0,64,64); return new THREE.CanvasTexture(cv); })(), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+  var wireM=new THREE.LineBasicMaterial({color:0x2a2340});
+  function garland(a,b,h,sag,n){
+    var pts=[]; for (var i=0;i<=n;i++){ var t=i/n; pts.push(new THREE.Vector3(a[0]+(b[0]-a[0])*t, h-Math.sin(t*Math.PI)*sag, a[1]+(b[1]-a[1])*t)); }
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireM));
+    pts.forEach(function(p,i){ if (i===0||i===n) return; var m=new THREE.Mesh(bulbGeo, mats[i%mats.length]); m.position.copy(p); m.position.y-=.25; g.add(m);
+      if (i%2===0){ var sp=new THREE.Sprite(halo); sp.position.copy(m.position); sp.scale.set(2.6,2.6,1); g.add(sp); } });
+  }
+  garland([19,-20],[46,-20],5.2,1.0,16); garland([19,-8],[46,-8],5.2,1.0,16); garland([19,4],[46,4],5.2,1.0,16);
+  garland([19,-20],[19,4],5.2,.8,12); garland([46,-20],[46,4],5.2,.8,12);
+  garland([-37,-23],[-16,-23],4.6,.9,12); garland([-16,-23],[-16,18],4.6,1.0,18);
+  garland([-3,-2.5],[8,6],4.4,.6,8); garland([8,-2.5],[-3,6],4.4,.6,8);
+  garland([46,-25],[56,-30],5,.7,7); garland([30,-32],[38,-27],4.6,.5,6);
+  var DAY={sky:0xcfdfe4, fog:[330,720], hemi:[0xe6f1f7,0x56663a,.62], sun:[0xfff1d6,.9], sunPos:[-70,150,-110]};
+  var NGT={sky:0x070b1a, fog:[200,560], hemi:[0x4a5aa8,0x0a120c,.42], sun:[0x9db4ff,.42], sunPos:[90,160,-60]};
+  function set(on){
+    var t=on?NGT:DAY;
+    scene.background.setHex(t.sky); scene.fog.color.setHex(t.sky); scene.fog.near=t.fog[0]; scene.fog.far=t.fog[1];
+    hemi.color.setHex(t.hemi[0]); hemi.groundColor.setHex(t.hemi[1]); hemi.intensity=t.hemi[2];
+    sun.color.setHex(t.sun[0]); sun.intensity=t.sun[1]; sun.position.set(t.sunPos[0],t.sunPos[1],t.sunPos[2]);
+    lights.forEach(function(l){ l.intensity = on ? l.userData.i : 0; });
+    M.glass.emissive.setHex(on?0xffa94d:0x000000); M.glass.emissiveIntensity=on?1.1:1;
+    M.water.emissive.setHex(on?0x1fc8ff:0x000000); M.water.emissiveIntensity=on?.8:1;
+    g.visible=on;
+    document.body.classList.toggle("night", on);
+    var b=$("daynight"); b.setAttribute("aria-pressed", String(on)); b.title = on ? "Cambiar a día" : "Cambiar a noche"; b.setAttribute("aria-label", on ? "Modo día" : "Modo noche");
+    try{ localStorage.setItem("lascarretas-modo", on?"noche":"dia"); }catch(_){}
+  }
+  $("daynight").addEventListener("click", function(){ set(!document.body.classList.contains("night")); });
+  var saved=null; try{ saved=localStorage.getItem("lascarretas-modo"); }catch(_){}
+  set(saved==="noche");
+  return {set:set};
 })();
 
 /* ---------- etiquetas ---------- */
