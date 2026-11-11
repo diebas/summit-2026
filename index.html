@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa del evento en Las Carretas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style id="css">
+:root{
+  /* Mapa a pantalla completa; panel de monte oscuro a la izquierda (abajo en celular); acento ocre de las paredes de la casona */
+  --forest:#16302a;
+  --forest-2:#21423a;
+  --paper:#f3eee2;
+  --mist:#a7bcb0;
+  --ochre:#e2b445;
+  --brick:#a8452f;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --panel-w:340px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:#cfdfe4;color:var(--paper);font:15px/1.45 var(--body);overflow:hidden;-webkit-font-smoothing:antialiased}
+#scene{position:fixed;inset:0}
+#scene canvas{display:block;width:100%;height:100%;touch-action:none}
+#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.place{position:absolute;left:0;top:0;white-space:nowrap;font:600 11px/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:#1d2b22;text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px rgba(255,255,255,.8);transform-origin:50% 50%}
+.place.big{font:700 14px/1 var(--display);letter-spacing:.02em;text-transform:none;color:#5a1d12}
+.place.road{color:#3b3b38}
+.place.water{color:#24485a;font-style:italic;text-transform:none;letter-spacing:.02em;font-size:12px}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;border:0;background:#fffdf7;color:#1c241f;font:600 13px/1.1 var(--body);box-shadow:0 2px 8px rgba(20,30,25,.28);cursor:pointer;white-space:nowrap;transition:box-shadow .15s}
+.pin b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--c);color:#fff;font:700 12px/1 var(--display)}
+.pin::after{content:"";position:absolute;left:14px;bottom:-5px;width:9px;height:9px;background:#fffdf7;transform:rotate(45deg);z-index:-1}
+.pin.on{box-shadow:0 0 0 3px var(--c),0 4px 14px rgba(20,30,25,.35)}
+.pin:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+.edit .pin{cursor:grab}
+.edit .pin.drag{cursor:grabbing}
+
+#panel{position:fixed;left:16px;top:16px;bottom:16px;width:var(--panel-w);display:flex;flex-direction:column;background:rgba(22,48,42,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:14px;box-shadow:0 10px 40px rgba(10,25,20,.35);overflow:hidden;z-index:5}
+#panel header{padding:20px 22px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.hbtns{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:none}
+@media (min-width:721px){#panel header{flex-direction:column}.hbtns{flex-direction:row}}
+.eitem .bottom{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.sw button{width:20px;height:20px}
+.placing #scene canvas{cursor:crosshair}
+#placebar{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:6;display:flex;gap:12px;align-items:center;padding:8px 8px 8px 16px;border-radius:999px;background:var(--forest);color:var(--paper);font:600 14px/1.2 var(--body);box-shadow:0 6px 20px rgba(10,25,20,.35);white-space:nowrap}
+#placebar[hidden]{display:none}
+.eitem.on{outline:2px solid var(--ochre)}
+.zone{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;padding:5px 11px;border-radius:7px;border:0;background:var(--c);color:#fff;font:700 12px/1.1 var(--body);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;box-shadow:0 2px 10px rgba(20,30,25,.3);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 5px,transparent 5px 10px)}
+.zone.on{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--c),0 4px 14px rgba(20,30,25,.35)}
+.zone:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+.vh{position:absolute;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff;border:3px solid var(--c);pointer-events:auto;cursor:grab;box-shadow:0 1px 5px rgba(0,0,0,.4);touch-action:none;padding:0}
+.vh.mid{width:12px;height:12px;margin:-6px 0 0 -6px;background:var(--c);border:2px solid #fff;opacity:.9}
+.vh.first{width:22px;height:22px;margin:-11px 0 0 -11px}
+.sec{margin:16px 6px 8px;font:600 11px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--ochre)}
+.sec:first-child{margin-top:4px}
+.sq{display:inline-block;width:26px;height:26px;border-radius:7px;background:var(--c);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.3) 0 4px,transparent 4px 8px);flex:none}
+.alist{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.item .inc{display:block;color:var(--mist);font-size:12.5px;margin-top:3px}
+.ahint{margin:0;color:var(--mist);font-size:12.5px}
+#placebar .pbb{display:flex;gap:6px}
+.mini{display:flex;gap:4px;align-items:center}
+.btn.icon{padding:6px 8px;min-width:30px}
+.btn.danger{color:#ffb4a3}
+.eyebrow{margin:0 0 6px;font:600 11px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--ochre)}
+h1{margin:0;font:700 26px/1.08 var(--display);text-wrap:balance}
+.sub{margin:8px 0 0;color:var(--mist);font-size:14px}
+#scroll{flex:1;overflow:auto;padding:10px 12px 12px}
+#list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.item{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;width:100%;text-align:left;padding:10px;border-radius:10px;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.item:hover,.item.on{background:var(--forest-2)}
+.item:focus-visible{outline:2px solid var(--ochre)}
+.num{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--c);color:#fff;font:700 13px/1 var(--display)}
+.item strong{display:block;font:600 15px/1.25 var(--body)}
+.item span.d{display:block;color:var(--mist);font-size:13.5px;margin-top:2px}
+.btn.toggle{display:none}
+.foot{margin:0;padding:12px 22px 16px;border-top:1px solid rgba(255,255,255,.08);color:var(--mist);font-size:12px}
+
+/* edición */
+.note{margin:4px 4px 12px;padding:10px 12px;border-radius:10px;background:rgba(226,180,69,.13);color:#f0dca8;font-size:13px}
+.field{display:grid;gap:4px;margin:0 4px 10px}
+.field label{font-size:12px;color:var(--mist)}
+input[type=text],textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#0f2520;color:var(--paper);font:inherit;font-size:14px}
+textarea{resize:vertical;min-height:52px}
+input:focus,textarea:focus{outline:2px solid var(--ochre);outline-offset:0;border-color:transparent}
+.eitem{padding:10px;border-radius:10px;background:var(--forest-2);display:grid;gap:8px}
+.eitem .row{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center}
+.sw{display:flex;gap:5px;flex-wrap:nowrap}
+.sw button{width:22px;height:22px;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer;padding:0}
+.sw button[aria-pressed=true]{border-color:#fff;box-shadow:0 0 0 2px var(--c)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--paper);font:600 14px/1 var(--body);cursor:pointer}
+.btn:hover{background:rgba(255,255,255,.07)}
+.btn.primary{background:var(--ochre);border-color:var(--ochre);color:#1f1a0c}
+.btn.primary:hover{background:#ecc25c}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;color:var(--mist)}
+.btn:focus-visible,.sw button:focus-visible{outline:2px solid var(--ochre);outline-offset:2px}
+.tools{display:grid;gap:8px;padding:12px 4px 4px}
+.status{margin:0;font-size:12.5px;color:var(--mist);min-height:1.2em}
+
+#hud{position:fixed;right:16px;top:16px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:4}
+#compass{width:46px;height:46px;border-radius:50%;background:rgba(255,253,247,.94);box-shadow:0 2px 10px rgba(20,30,25,.25);display:grid;place-items:center;border:0;cursor:pointer;padding:0}
+#compass svg{width:34px;height:34px;transition:transform .05s linear}
+.views{display:flex;background:rgba(255,253,247,.94);border-radius:10px;box-shadow:0 2px 10px rgba(20,30,25,.25);overflow:hidden}
+.views button{border:0;background:transparent;padding:9px 13px;font:600 13px/1 var(--body);color:#26322b;cursor:pointer}
+.views button[aria-pressed=true]{background:var(--forest);color:var(--paper)}
+.views button:focus-visible{outline:2px solid var(--ochre);outline-offset:-2px}
+#hint{position:fixed;right:16px;bottom:16px;padding:7px 11px;border-radius:8px;background:rgba(255,253,247,.9);color:#3a463f;font-size:12.5px;box-shadow:0 2px 8px rgba(20,30,25,.18);z-index:4}
+#loading{position:fixed;inset:0;display:grid;place-items:center;color:#24352d;font:600 15px var(--body);pointer-events:none}
+
+@media (max-width:720px){
+  #panel{left:0;right:0;top:auto;bottom:0;width:auto;height:40%;border-radius:16px 16px 0 0}
+  #panel.closed{height:auto}
+  #panel.closed #scroll,#panel.closed .foot{display:none}
+  #panel header{padding:14px 18px 10px}
+  #placebar{top:auto;bottom:calc(40% + 12px);font-size:13px}
+  h1{font-size:21px}
+  .btn.toggle{display:inline-flex}
+  #hint{display:none}
+  #hud{right:12px;top:12px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<script id="state" type="application/json">{
+ "title": "Summit 2026",
+ "subtitle": "Dónde está cada cosa en la chacra",
+ "pins": [
+  {
+   "id": "p7",
+   "name": "Masajes",
+   "desc": "Veni a relajarte",
+   "color": "#c2357a",
+   "x": 52.5,
+   "z": 35.5
+  },
+  {
+   "id": "p2",
+   "name": "Tarot",
+   "desc": "Descubri tu futuro bajo los árboles.",
+   "color": "#c2357a",
+   "x": 57,
+   "z": -31
+  },
+  {
+   "id": "p3",
+   "name": "Salon principal",
+   "desc": "Fiestita loquitha",
+   "color": "#7b4fb5",
+   "x": 3,
+   "z": -12.5
+  },
+  {
+   "id": "p4",
+   "name": "Piscina",
+   "desc": "Patio central",
+   "color": "#2f7fbf",
+   "x": 0,
+   "z": 3
+  },
+  {
+   "id": "p5",
+   "name": "Arqueria",
+   "desc": "Hay flecha pa vo",
+   "color": "#d9482b",
+   "x": -16.5,
+   "z": -69
+  },
+  {
+   "id": "p8",
+   "name": "Samba",
+   "desc": "Volve a ser niño",
+   "color": "#d9482b",
+   "x": -16.5,
+   "z": -33
+  },
+  {
+   "id": "pmwb4lulz",
+   "name": "Futbol Burbuja",
+   "desc": "",
+   "color": "#d9482b",
+   "x": 54.5,
+   "z": -89.5
+  },
+  {
+   "id": "p6",
+   "name": "Food trucks",
+   "desc": "Cagao di hambre muchacho",
+   "color": "#e07a1f",
+   "x": 25.5,
+   "z": -2.5
+  },
+  {
+   "id": "pmwb4pff3",
+   "name": "Personalizados",
+   "desc": "Hacete tu propio merch!",
+   "color": "#2f9e6b",
+   "x": 13.5,
+   "z": -39
+  }
+ ],
+ "examples": false,
+ "areas": [
+  {
+   "id": "a-juegos",
+   "name": "Área de juegos",
+   "color": "#e2b445",
+   "points": [
+    [
+     86,
+     -58.5
+    ],
+    [
+     10.5,
+     -59.5
+    ],
+    [
+     9.5,
+     -28.5
+    ],
+    [
+     -31,
+     -29.5
+    ],
+    [
+     -30.5,
+     -103.5
+    ],
+    [
+     90,
+     -104.5
+    ]
+   ]
+  },
+  {
+   "id": "a-artistica",
+   "name": "Área artística",
+   "color": "#7b4fb5",
+   "points": [
+    [
+     50,
+     -58
+    ],
+    [
+     11.5,
+     -58.5
+    ],
+    [
+     10,
+     -22.5
+    ],
+    [
+     48,
+     -22.5
+    ]
+   ]
+  },
+  {
+   "id": "a-gourmet",
+   "name": "Área gourmet",
+   "color": "#e07a1f",
+   "points": [
+    [
+     47.5,
+     -21.5
+    ],
+    [
+     17.5,
+     -21.5
+    ],
+    [
+     17.5,
+     23.5
+    ],
+    [
+     45.5,
+     24.5
+    ]
+   ]
+  },
+  {
+   "id": "a-relax",
+   "name": "Área de relax",
+   "color": "#2f9e6b",
+   "points": [
+    [
+     87.5,
+     -57
+    ],
+    [
+     50.5,
+     -58.5
+    ],
+    [
+     46.5,
+     47
+    ],
+    [
+     78,
+     52.5
+    ]
+   ]
+  }
+ ],
+ "areasDraft": false
+}</script>
+<script id="app">
+(function(){
+"use strict";
+var STATE = JSON.parse(document.getElementById("state").textContent);
+var EDIT = false; /* versión pública: solo lectura */
+var PAGE_TITLE = "Mapa del evento en Las Carretas";
+var THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+var ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
+var FONT_URL = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap";
+var PALETTE = ["#d9482b","#e2b445","#2f7fbf","#7b4fb5","#2f9e6b","#e07a1f","#c2357a","#3b4a54"];
+var REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- shell ---------- */
+document.body.insertAdjacentHTML("afterbegin",
+ '<div id="scene"></div><div id="labels"></div><div id="loading">Cargando el mapa…</div>'+
+ '<aside id="panel" aria-label="Atracciones del evento">'+
+ ' <header><div><p class="eyebrow">Mapa del evento</p><h1 id="ev-title"></h1><p class="sub" id="ev-sub"></p></div>'+
+ ' <div class="hbtns"><button class="btn small" type="button" id="edit-btn" hidden>Editar mapa</button><button class="btn small toggle" type="button" id="toggle" aria-expanded="true">Ocultar</button></div></header>'+
+ ' <div id="scroll"></div>'+
+ ' <p class="foot">Establecimiento Las Carretas · Ruta 36, Melilla<br>Modelo aproximado, hecho a partir de la vista satelital y fotos del lugar.</p>'+
+ '</aside>'+
+ '<div id="hud"><button id="compass" title="Volver al norte" aria-label="Orientar al norte"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 L22 17 L17 15 L12 17 Z" fill="#a8452f"/><path d="M17 31 L22 17 L17 19 L12 17 Z" fill="#9aa59f"/><text x="17" y="12.5" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="Figtree,sans-serif">N</text></svg></button>'+
+ ' <div class="views" role="group" aria-label="Vista"><button data-view="3d" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Plano</button></div></div>'+
+ '<div id="placebar" hidden role="status"><span id="pb-text"></span><span class="pbb" id="pb-btns"></span></div>'+
+ '<div id="hint">Arrastrá para girar · rueda o pellizco para acercar</div>');
+
+
+var $ = function(id){ return document.getElementById(id); };
+
+/* ---------- utils ---------- */
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+var R = rng(1877);
+function inPoly(x, z, poly){ var c=false; for (var i=0,j=poly.length-1;i<poly.length;j=i++){ var xi=poly[i][0], zi=poly[i][1], xj=poly[j][0], zj=poly[j][1]; if (((zi>z)!==(zj>z)) && (x < (xj-xi)*(z-zi)/(zj-zi)+xi)) c=!c; } return c; }
+function rect(x0,z0,x1,z1){ return [[x0,z0],[x1,z0],[x1,z1],[x0,z1]]; }
+function spline(pts, n){ var v = pts.map(function(p){ return new THREE.Vector3(p[0],0,p[1]); }); var c = new THREE.CatmullRomCurve3(v); return c.getPoints(n).map(function(p){ return [p.x,p.z]; }); }
+function distToLine(x, z, line){ var best=1e9; for (var i=0;i<line.length-1;i++){ var ax=line[i][0], az=line[i][1], bx=line[i+1][0], bz=line[i+1][1]; var dx=bx-ax, dz=bz-az; var t=((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz); t=Math.max(0,Math.min(1,t)); var px=ax+t*dx-x, pz=az+t*dz-z; var d=Math.sqrt(px*px+pz*pz); if (d<best) best=d; } return best; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+/* ---------- geografía (metros; x = este, z = sur; origen = centro de la casona) ---------- */
+var ROAD = spline([[-41,-260],[-42,-123],[-43.5,-61],[-46,2],[-47,43],[-43,72],[-36,89],[-18,143],[-2,200],[12,260]], 260);
+var CREEK = spline([[-230,88],[-140,100],[-75,112],[-37,89],[-22,76],[-2,60],[19,50],[46,50],[65,60],[88,85],[130,127],[230,180]], 300);
+var POND = (function(){ var pts=[]; for (var i=0;i<40;i++){ var a=i/40*Math.PI*2; var r=1+0.18*Math.sin(a*2+0.6); var lx=Math.cos(a)*23*r, lz=Math.sin(a)*8*r + Math.cos(a)*Math.cos(a)*3; var ang=0.78; pts.push([86+lx*Math.cos(ang)-lz*Math.sin(ang), 52+lx*Math.sin(ang)+lz*Math.cos(ang)]); } return pts; })();
+var ESPLANADA = [[-31,-29],[-17,-29],[-15,-24],[-15,20],[-19,24],[-31,24]];
+var LAWN_NW = [[-30,-95],[31,-97],[33,-78],[26,-58],[22,-55],[-6,-56],[-8,-36],[-16,-30],[-30,-30]];
+var LAWN_NE = [[16,-99],[84,-103],[82,-86],[55,-82],[52,-60],[50,-32],[30,-30],[33,-57]];
+var LAWN_E = [[18,-24],[48,-24],[48,6],[20,8],[18,-6]];
+/* laguito entre el jardín oeste y la cancha (mancha oscura con juncos en el satélite) */
+function lagoAt(cx, cz){ var pts=[], rot=0.45; for (var i=0;i<36;i++){ var a=i/36*Math.PI*2; var r=1+0.12*Math.sin(a*3+1)+0.08*Math.cos(a*2); var lx=Math.cos(a)*6.2*r, lz=Math.sin(a)*4.2*r; pts.push([cx+lx*Math.cos(rot)-lz*Math.sin(rot), cz+lx*Math.sin(rot)+lz*Math.cos(rot)]); } return pts; }
+var LAGO = lagoAt(7, -67);       // ubicación actual (corrida 6 m al este, más lejos del alambrado)
+var LAGO_PREV = lagoAt(1, -67);  // donde estaba antes: queda como césped abierto
+function scalePoly(pts, f){ var cx=0, cz=0; pts.forEach(function(p){ cx+=p[0]; cz+=p[1]; }); cx/=pts.length; cz/=pts.length; return pts.map(function(p){ return [cx+(p[0]-cx)*f, cz+(p[1]-cz)*f]; }); }
+/* dos árboles enormes donde va el Tarot (coníferas: una de ramas colgantes y otra en capas) */
+var BIGTREES = {cx:57, cz:-31};
+function circlePoly(cx,cz,r,n){ var o=[]; for (var i=0;i<(n||24);i++){ var a=i/(n||24)*Math.PI*2; o.push([cx+Math.cos(a)*r, cz+Math.sin(a)*r]); } return o; }
+/* pérgola de techo de palma entre los árboles (zona de Masajes) */
+var PERGOLA = {cx:52.5, cz:35.5, s:6, rot:0.35};
+/* pérgola cuadrada cubierta de enredaderas (entre Personalizados y Tarot) */
+var PERGOLA2 = {cx:38.5, cz:-27.5, s:4.2, rot:-0.2};
+/* alambrado que parte el jardín oeste, paralelo a la ruta, en la línea de la fachada oeste de la casona */
+var FENCE = {x:-14.2, z0:-17, z1:-96, gap:[-35,-31]};
+/* juegos de niños (hamaca con palmera y farol, como en la foto) */
+var JUEGOS = {cx:-6, cz:-57, rot:0.25};
+/* cancha de fútbol (franja de césped cortado al norte; arco visible en el satélite en el extremo oeste) */
+var FIELD = {cx:54, cz:-87.5, len:42, wid:18, rot:0.065};
+function fieldPoly(m){ var c=Math.cos(FIELD.rot), s=Math.sin(FIELD.rot), L=FIELD.len/2+m, Wd=FIELD.wid/2+m; return [[-L,-Wd],[L,-Wd],[L,Wd],[-L,Wd]].map(function(q){ return [FIELD.cx+q[0]*c+q[1]*s, FIELD.cz-q[0]*s+q[1]*c]; }); }
+
+/* ---------- three ---------- */
+var W = innerWidth, H = innerHeight;
+var renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$("scene").appendChild(renderer.domElement);
+
+var SKY = 0xcfdfe4;
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(SKY);
+scene.fog = new THREE.Fog(SKY, 330, 720);
+
+var camera = new THREE.PerspectiveCamera(38, W/H, 1, 2000);
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 25; controls.maxDistance = 480;
+controls.maxPolarAngle = 1.38;
+controls.screenSpacePanning = false;
+controls.target.set(6,0,-30);
+camera.position.set(-100,112,88);
+
+scene.add(new THREE.HemisphereLight(0xe6f1f7, 0x56663a, 0.62));
+var sun = new THREE.DirectionalLight(0xfff1d6, 0.9);
+sun.position.set(-70,150,-110); /* sol del norte: hemisferio sur */
+sun.target.position.set(15,0,-10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+var sc = sun.shadow.camera; sc.left=-170; sc.right=170; sc.top=170; sc.bottom=-170; sc.near=10; sc.far=450;
+sun.shadow.bias = -0.0006;
+scene.add(sun); scene.add(sun.target);
+
+/* ---------- suelo pintado ---------- */
+var GX0=-200, GZ0=-210, GS=420, GN=2048;
+function groundTexture(){
+  var cv=document.createElement("canvas"); cv.width=cv.height=GN; var g=cv.getContext("2d");
+  var k=GN/GS; function P(x,z){ return [(x-GX0)*k,(z-GZ0)*k]; }
+  function poly(pts, fill){ g.beginPath(); pts.forEach(function(p,i){ var q=P(p[0],p[1]); if(i) g.lineTo(q[0],q[1]); else g.moveTo(q[0],q[1]); }); g.closePath(); g.fillStyle=fill; g.fill(); }
+  function line(pts, w, col, dash){ g.beginPath(); pts.forEach(function(p,i){ var q=P(p[0],p[1]); if(i) g.lineTo(q[0],q[1]); else g.moveTo(q[0],q[1]); }); g.lineWidth=w*k; g.strokeStyle=col; g.lineCap="round"; g.lineJoin="round"; g.setLineDash(dash?dash.map(function(d){return d*k;}):[]); g.stroke(); g.setLineDash([]); }
+  function offset(pts, d){ return pts.map(function(p,i){ var a=pts[Math.max(0,i-1)], b=pts[Math.min(pts.length-1,i+1)]; var tx=b[0]-a[0], tz=b[1]-a[1], l=Math.hypot(tx,tz)||1; return [p[0]-tz/l*d, p[1]+tx/l*d]; }); }
+  // base
+  g.fillStyle="#9aab5e"; g.fillRect(0,0,GN,GN);
+  // campo al oeste de la ruta (rastrojo)
+  var westEdge = offset(ROAD, 6.5);
+  poly([[GX0,GZ0]].concat(westEdge.filter(function(p){return p[1]>GZ0-5 && p[1]<GZ0+GS+5;})).concat([[GX0,GZ0+GS]]), "#bba86d");
+  g.save(); g.globalAlpha=0.16; for (var i=0;i<60;i++){ var c=P(-260,-40); g.beginPath(); g.arc(c[0],c[1],(60+i*3.2)*k,0,Math.PI*2); g.strokeStyle=i%2?"#8d7c45":"#d9c88e"; g.lineWidth=1.2*k; g.stroke(); } g.restore();
+  poly([[GX0,GZ0]].concat(westEdge.filter(function(p){return p[1]<-112 && p[1]>GZ0-5;})).concat([[GX0,-112]]), "rgba(150,165,90,.55)");
+  // campos al norte
+  poly(rect(-35,GZ0,92,-108), "#a6b067");
+  g.save(); g.globalAlpha=.12; for (var x=-35;x<92;x+=3){ line([[x,GZ0],[x,-110]],1.2,"#6f7d3c"); } g.restore();
+  // monte y predio
+  poly(rect(-38,-108,94,110), "#6f8f43");
+  poly([[-38,24],[-14,24],[20,8],[48,8],[70,42],[95,92],[60,105],[-38,100]], "#5a7a37");
+  poly(LAWN_NW, "#86ac4e"); poly(LAWN_NE, "#8db353"); poly(LAWN_E, "#83a84c");
+  poly([[47,-69],[64,-69],[67,-60],[65,-45],[50,-41],[46,-52]], "#8db353");
+  poly(circlePoly(2.5,-48,11,28), "#86ac4e");
+  poly(fieldPoly(3), "#8db353");
+  // frutales al este
+  var blocks=[rect(94,-200,152,-112),rect(94,-106,152,-44),rect(94,-38,152,22),rect(158,-200,215,-44),rect(158,-38,215,22),rect(100,30,215,98)];
+  blocks.forEach(function(b){ poly(b,"#a89767"); var x0=b[0][0], x1=b[1][0], z0=b[0][1], z1=b[2][1]; for (var x=x0+2;x<x1;x+=4){ line([[x,z0+1],[x,z1-1]],1.6,"#7e9a4b"); } });
+  poly(rect(-38,-108,94,-104), "#6b8a40");
+  // tajamar
+  poly(POND.map(function(p){ return [86+(p[0]-86)*1.25, 52+(p[1]-52)*1.25]; }), "#b19c70");
+  poly(POND, "#8fb07c");
+  // arroyo
+  line(CREEK, 9, "#4f6a3a"); line(CREEK, 4.5, "#5e6f55"); line(CREEK, 2.6, "#6e8a8a");
+  // ruta 36 (banquinas, asfalto, pintura)
+  line(ROAD, 12, "#b9a979"); line(ROAD, 7.4, "#4b4c49");
+  line(offset(ROAD,3.35), .18, "#f2f2ee"); line(offset(ROAD,-3.35), .18, "#f2f2ee");
+  line(ROAD, .16, "#e7c43a", [3,5]);
+  // acceso, explanada y senderos
+  line([[-42,-23],[-34,-23.5],[-28,-22],[-23,-16]], 6, "#cbb98f");
+  poly(ESPLANADA, "#cdbb90");
+  line([[-15,-24],[0,-27.5],[17,-25],[28,-14],[30,-4]], 3, "#c9b78b");
+  line([[-16,-26],[-12,-40],[-6,-46]], 2.2, "#c9b78b");
+  line([[-30,26],[-24,40],[-14,56],[0,62]], 2, "#b9a77b");
+  // huella de la casona y patio
+  poly(rect(-14.6,-23.4,17.4,23.4), "#bfb3a0");
+  poly(rect(-4.6,-3.6,8.4,7.2), "#b65d43");
+  g.save(); g.globalAlpha=.25; for (var zz=-3.6; zz<7.2; zz+=.6){ line([[-4.6,zz],[8.4,zz]], .05, "#7a3322"); } g.restore();
+  // claro de césped bajo los árboles grandes, abierto hacia el noroeste
+  poly(circlePoly(BIGTREES.cx-2,BIGTREES.cz-2,15,32), "#89af4f");
+  poly([[44,-52],[52,-44],[66,-38],[60,-22],[44,-24]], "#89af4f");
+  // claro de césped bajo la pérgola
+  poly(circlePoly(PERGOLA.cx,PERGOLA.cz,8.5,28), "#7ea548");
+  poly(circlePoly(PERGOLA.cx,PERGOLA.cz,4.2,6), "#738f45");
+  // claro de césped alrededor de la pérgola de enredaderas
+  poly(circlePoly(PERGOLA2.cx,PERGOLA2.cz,9,28), "#8ab350");
+  // laguito: césped alrededor, orilla y agua
+  poly(scalePoly(LAGO_PREV,1.9), "#83aa4c");
+  poly(scalePoly(LAGO,1.9), "#83aa4c");
+  poly(scalePoly(LAGO,1.28), "#8f8a5a");
+  poly(scalePoly(LAGO,1.12), "#5f7d4a");
+  poly(LAGO, "#4f8790");
+  // cancha: franjas de corte y líneas
+  (function(){
+    var c=P(FIELD.cx,FIELD.cz), L=FIELD.len/2*k, Wd=FIELD.wid/2*k, lw=.28*k;
+    g.save(); g.translate(c[0],c[1]); g.rotate(-FIELD.rot);
+    for (var i=0;i<FIELD.len/3.5;i++){ g.fillStyle=i%2?"#86ae4c":"#97be5a"; g.fillRect(-L+i*3.5*k,-Wd-1.5*k,3.5*k,2*Wd+3*k); }
+    g.restore();
+  })();
+  // ruido de textura
+  var r=rng(7); g.save(); for (i=0;i<26000;i++){ var gx=r()*GN, gz=r()*GN; g.globalAlpha=.06+r()*.07; g.fillStyle=r()<.5?"#2f4a1f":"#f2ecc8"; g.fillRect(gx,gz,1+r()*2.2,1+r()*2.2); } g.restore();
+  // líneas de la cancha (encima del ruido)
+  (function(){
+    var c=P(FIELD.cx,FIELD.cz), L=FIELD.len/2*k, Wd=FIELD.wid/2*k;
+    g.save(); g.translate(c[0],c[1]); g.rotate(-FIELD.rot); g.strokeStyle="rgba(250,250,245,.95)"; g.lineWidth=.3*k; g.setLineDash([]);
+    g.strokeRect(-L,-Wd,2*L,2*Wd);
+    g.beginPath(); g.moveTo(0,-Wd); g.lineTo(0,Wd); g.stroke();
+    g.beginPath(); g.arc(0,0,3.5*k,0,Math.PI*2); g.stroke();
+    [-1,1].forEach(function(sd){ g.strokeRect(sd<0?-L:L-5*k,-5.5*k,5*k,11*k); g.beginPath(); g.arc(sd*(L-7*k),0,.35*k,0,Math.PI*2); g.fillStyle="#fafaf5"; g.fill(); });
+    g.beginPath(); g.arc(0,0,.35*k,0,Math.PI*2); g.fillStyle="#fafaf5"; g.fill();
+    g.restore();
+  })();
+  // re-pintar la pintura vial por encima del ruido
+  line(offset(ROAD,3.35), .18, "#f2f2ee"); line(offset(ROAD,-3.35), .18, "#f2f2ee"); line(ROAD, .16, "#e7c43a", [3,5]);
+  var t = new THREE.CanvasTexture(cv); t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
+}
+var ground = new THREE.Mesh(new THREE.PlaneGeometry(GS,GS), new THREE.MeshLambertMaterial({map:groundTexture()}));
+ground.rotation.x = -Math.PI/2; ground.position.set(GX0+GS/2, 0, GZ0+GS/2); ground.receiveShadow = true; scene.add(ground);
+var outer = new THREE.Mesh(new THREE.PlaneGeometry(3000,3000), new THREE.MeshLambertMaterial({color:0x9aab5e}));
+outer.rotation.x = -Math.PI/2; outer.position.y = -0.08; scene.add(outer);
+
+/* ---------- materiales ---------- */
+function lam(c, o){ var m = new THREE.MeshLambertMaterial(Object.assign({color:c}, o||{})); return m; }
+var M = { wall:lam(0xe4bc55), trim:lam(0x8a2b1f), roof:lam(0xa8442f,{flatShading:true}), roof2:lam(0x7d3b2d,{flatShading:true}), flat:lam(0xd8d4cb), glass:lam(0x2b3a40), wood:lam(0x6b4a2e), woodDark:lam(0x4a3220), white:lam(0xf1ede4), water:lam(0x3db4d0), stone:lam(0xc9c2b4) };
+
+function box(w,h,d,mat,x,y,z){ var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; scene.add(m); return m; }
+
+function hipRoof(w, d, h){
+  var swap = d > w; if (swap){ var t=w; w=d; d=t; }
+  var X=w/2, Z=d/2, A=[-X,0,-Z], B=[X,0,-Z], C=[X,0,Z], D=[-X,0,Z], R1=[-X+Z,h,0], R2=[X-Z,h,0];
+  var tris=[B,A,R1, B,R1,R2, D,C,R2, D,R2,R1, C,B,R2, A,D,R1];
+  var pos=[]; tris.forEach(function(v){ pos.push(v[0],v[1],v[2]); });
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos,3)); g.computeVertexNormals();
+  if (swap) g.rotateY(Math.PI/2);
+  return g;
+}
+
+/* ---------- casona ---------- */
+var frames=[], glasses=[];
+function windowsOn(x0,z0,x1,z1, face, n, ys, door){
+  var len = (face==="w"||face==="e") ? z1-z0 : x1-x0;
+  for (var i=0;i<n;i++){
+    var s = (i+0.5)/n;
+    ys.forEach(function(y, fi){
+      var isDoor = door && fi===0 && i===Math.floor(n/2);
+      var hh = isDoor?2.5:1.55, ww = isDoor?1.5:1.15, yy = isDoor?1.3:y;
+      var p, rotY = (face==="w"||face==="e") ? Math.PI/2 : 0;
+      if (face==="w") p=[x0-0.06, yy, z0+s*len];
+      if (face==="e") p=[x1+0.06, yy, z0+s*len];
+      if (face==="n") p=[x0+s*len, yy, z0-0.06];
+      if (face==="s") p=[x0+s*len, yy, z1+0.06];
+      frames.push({p:p, r:rotY, s:[ww+0.28, hh+0.26, 0.14]});
+      glasses.push({p:[p[0]+(face==="w"?-0.04:face==="e"?0.04:0), p[1], p[2]+(face==="n"?-0.04:face==="s"?0.04:0)], r:rotY, s:[ww, hh, 0.12]});
+    });
+  }
+}
+function wing(x0,z0,x1,z1,h,o){
+  o=o||{};
+  var w=x1-x0, d=z1-z0, cx=(x0+x1)/2, cz=(z0+z1)/2;
+  box(w,h,d,o.flat?M.flat:M.wall,cx,h/2,cz);
+  if (o.flat){ box(w+0.3,0.25,d+0.3,M.white,cx,h+0.12,cz); return; }
+  box(w+0.14,0.55,d+0.14,M.trim,cx,0.27,cz);
+  box(w+0.2,0.32,d+0.2,M.trim,cx,h-0.16,cz);
+  if (o.mid) box(w+0.14,0.2,d+0.14,M.trim,cx,o.mid,cz);
+  var r = new THREE.Mesh(hipRoof(w+0.9, d+0.9, o.rh||2), o.roof||M.roof); r.position.set(cx,h,cz); r.castShadow=true; r.receiveShadow=true; scene.add(r);
+  (o.win||[]).forEach(function(f){ windowsOn(x0,z0,x1,z1,f[0],f[1],o.ys||[2.1],f[2]); });
+}
+// ala oeste: dos plantas, fachada principal sobre la explanada
+wing(-13.9,-15.6,-4.6,13.7, 7.4, {mid:3.7, rh:2.2, ys:[1.9,5.4], win:[["w",7,true],["e",6],["n",2],["s",2]]});
+// pretil con remate central (como en la fachada real)
+box(0.35,1.1,29.9,M.wall,-14.05,7.95,-0.95);
+box(0.45,0.22,30.1,M.trim,-14.08,8.55,-0.95);
+box(0.4,1.2,3.2,M.wall,-14.05,8.9,-0.95);
+var ped = new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,0.4,3,1,false,0,Math.PI), M.wall); ped.rotation.set(0,0,Math.PI/2); ped.position.set(-14.05,9.5,-0.95); scene.add(ped);
+box(0.3,0.5,0.5,M.trim,-13.8,7.6,11.6); box(0.3,0.5,0.5,M.trim,-13.8,7.6,10.9);
+wing(-4.6,-15.6,11.5,-3.6, 4.7, {rh:2.4, win:[["n",4],["e",3],["s",3,true]]});
+wing(-6.7,-22.8,8.9,-15.6, 4.0, {rh:1.8, roof:M.roof2, win:[["n",4],["w",2],["e",2]]});
+wing(8.4,-3.6,13.7,16.8, 4.2, {rh:1.8, win:[["e",5],["w",4]]});
+wing(-4.6,7.2,8.4,13.7, 4.2, {rh:1.9, win:[["s",3],["n",3]]});
+wing(5.8,16.8,11.5,22.8, 3.6, {rh:1.6, win:[["s",1],["w",1]]});
+wing(11.5,-13,16.8,-5.8, 3.2, {flat:true});
+wing(13.7,6.2,16.8,15.6, 3.0, {flat:true});
+(function(){
+  var geo = new THREE.BoxGeometry(1,1,1);
+  function inst(list, mat){ var im = new THREE.InstancedMesh(geo, mat, list.length); var o = new THREE.Object3D(); list.forEach(function(it,i){ o.position.set(it.p[0],it.p[1],it.p[2]); o.rotation.set(0,it.r,0); o.scale.set(it.s[0],it.s[1],it.s[2]); o.updateMatrix(); im.setMatrixAt(i,o.matrix); }); scene.add(im); }
+  inst(frames, M.trim); inst(glasses, M.glass);
+})();
+// piscina y pérgola en el patio
+box(4.6,0.12,10.2,M.white,5.6,0.06,1.85);
+box(3.9,0.1,9.5,M.water,5.6,0.1,1.85);
+[[3.2,-3.3],[8.0,-3.3],[3.2,7.0],[8.0,7.0]].forEach(function(p){ box(0.18,3.1,0.18,M.woodDark,p[0],1.55,p[1]); });
+var perg = new THREE.Mesh(new THREE.BoxGeometry(5.2,0.06,10.6), new THREE.MeshLambertMaterial({color:0xf6f3ea, transparent:true, opacity:.55})); perg.position.set(5.6,3.15,1.85); scene.add(perg);
+
+/* ---------- árboles ---------- */
+var trees = [];
+var NO_TREE = [rect(-17,-26,19,26), ESPLANADA, fieldPoly(3.5), scalePoly(LAGO_PREV,1.7), circlePoly(BIGTREES.cx,BIGTREES.cz,14), circlePoly(PERGOLA.cx,PERGOLA.cz,7), circlePoly(PERGOLA2.cx,PERGOLA2.cz,7.5), [[44,-52],[52,-44],[60,-40],[50,-30],[44,-30]]];
+function okTree(x,z){ if (distToLine(x,z,ROAD) < 7.5) return false; if (distToLine(x,z,CREEK) < 3.2) return false; for (var i=0;i<NO_TREE.length;i++) if (inPoly(x,z,NO_TREE[i])) return false; if (inPoly(x,z,POND)) return false; return true; }
+function fill(poly, spacing, prob, eucShare, size){
+  var xs=poly.map(function(p){return p[0];}), zs=poly.map(function(p){return p[1];});
+  for (var x=Math.min.apply(null,xs); x<Math.max.apply(null,xs); x+=spacing){
+    for (var z=Math.min.apply(null,zs); z<Math.max.apply(null,zs); z+=spacing){
+      var jx = x + (R()-.5)*spacing*.9, jz = z + (R()-.5)*spacing*.9;
+      if (R() > prob || !inPoly(jx,jz,poly) || !okTree(jx,jz)) continue;
+      trees.push({x:jx, z:jz, euc: R()<eucShare, s:(size||1)*(0.8+R()*0.45)});
+    }
+  }
+}
+function single(x,z,s){ trees.push({x:x,z:z,euc:false,s:s||1.15}); }
+fill(rect(-37,-108,92,-97), 4.6, .9, .55);
+fill(rect(-38,-96,-31.5,-30), 4.6, .85, .25);
+fill(rect(-38,-16,-32,70), 4.6, .85, .25);
+fill([[-3,-96],[7,-96],[24,-57],[13,-54]], 4.4, .85, .2); // franja de árboles corrida hacia el laguito
+fill([[-6,-58],[18,-60],[30,-48],[48,-40],[48,-27],[30,-27],[20,-29],[2,-30],[-8,-36]], 4.3, .8, .15);
+fill([[55,-82],[84,-88],[86,-40],[72,2],[68,40],[48,40],[49,6],[50,-24],[50,-60]], 4.5, .85, .3);
+fill([[-38,24],[-17,24],[-14,27],[12,27],[19,24],[20,9],[46,9],[48,40],[68,42],[95,92],[60,104],[20,98],[-20,104],[-38,98]], 4.8, .85, .3);
+fill([[-30,104],[60,104],[110,142],[150,160],[165,195],[60,178],[0,160],[-26,126]], 6.5, .55, .2);
+fill([[-16,-123],[23,-123],[23,-111],[-16,-111]], 6, .6, .4);
+fill([[-120,96],[-40,95],[-60,122],[-140,118]], 5.5, .75, .2);
+[[-20,-88],[-12,-80],[-23,-71],[0,-84],[-2,-72],[-18,-52],[-11,-43],[3,-50],[-25,-41],[33,-75],[37,-71],[40,-4],[24,3],[-162,45],[-128,53],[-110,-150],[-150,-60]].forEach(function(p){ single(p[0],p[1]); });
+// grupito de árboles junto al arco oeste de la cancha (con su propia semilla, para no mover el resto)
+(function(){ var r2=rng(4242), cx=19.5, cz=-89, n=0, tries=0;
+  while (n<9 && tries<200){ tries++; var a=r2()*Math.PI*2, d=Math.sqrt(r2())*8.5, x=cx+Math.cos(a)*d, z=cz+Math.sin(a)*d*.85;
+    if (!okTree(x,z)) continue; var near=trees.some(function(t){ return Math.hypot(t.x-x,t.z-z)<3.6; }); if (near) continue;
+    trees.push({x:x, z:z, euc:r2()<.25, s:.85+r2()*.4}); n++; } })();
+
+// árboles quitados a pedido (se ocultan en su lugar para no alterar el resto del bosque)
+var CLEARED = [[41.5,-41.5,7],[59,-54.5,7],[2.5,-48,10]];
+// zona abierta entre el claro y el lugar despejado; quedan solo los árboles contra la cancha y contra el borde este
+var CLEARED_POLYS = [[[47,-69],[64,-69],[67,-60],[65,-45],[50,-41],[46,-52]]];
+trees.forEach(function(t){ CLEARED.forEach(function(c){ if (Math.hypot(t.x-c[0], t.z-c[1]) < c[2]) t.hide=true; }); CLEARED_POLYS.forEach(function(q){ if (inPoly(t.x,t.z,q)) t.hide=true; });
+  if (Math.abs(t.x-FENCE.x)<1.4 && t.z<FENCE.z0 && t.z>FENCE.z1) t.hide=true;
+  if (Math.hypot(t.x-JUEGOS.cx, t.z-JUEGOS.cz)<5) t.hide=true;
+  if (inPoly(t.x,t.z,scalePoly(LAGO,1.7))) t.hide=true; });
+(function(){
+  var leafCols = ["#4c7633","#5a8739","#3e6a2e","#679340","#557f37"].map(function(c){ return new THREE.Color(c); });
+  var eucCols = ["#7a976a","#6c8b5f","#86a074"].map(function(c){ return new THREE.Color(c); });
+  var canopyGeo = new THREE.IcosahedronGeometry(1,1);
+  var trunkGeo = new THREE.CylinderGeometry(0.22,0.32,1,6); trunkGeo.translate(0,0.5,0);
+  var canopy = new THREE.InstancedMesh(canopyGeo, new THREE.MeshLambertMaterial({flatShading:true}), trees.length);
+  var trunk = new THREE.InstancedMesh(trunkGeo, lam(0x5d4630), trees.length);
+  canopy.castShadow = trunk.castShadow = true; canopy.receiveShadow = true;
+  var o = new THREE.Object3D();
+  trees.forEach(function(t,i){
+    var th = t.euc ? 6+R()*4 : 2+R()*1.6, cr = t.euc ? 2.1+R()*1.0 : 2.4+R()*1.3;
+    th*=t.s; cr*=t.s;
+    o.position.set(t.x,0,t.z); o.rotation.set(0,R()*6.28,0); o.scale.set(t.s*(t.euc?1.1:1.3),th,t.s*(t.euc?1.1:1.3)); o.updateMatrix(); trunk.setMatrixAt(i,o.matrix);
+    o.position.set(t.x, th + cr*(t.euc?1.1:0.7), t.z); o.scale.set(cr*(0.9+R()*.2), cr*(t.euc?1.7:0.95), cr*(0.9+R()*.2)); o.updateMatrix(); canopy.setMatrixAt(i,o.matrix);
+    var col = (t.euc?eucCols:leafCols)[Math.floor(R()*(t.euc?3:5))].clone(); col.offsetHSL(0,0,(R()-.5)*.06); canopy.setColorAt(i,col);
+    if (t.hide){ o.position.set(0,-50,0); o.scale.set(0,0,0); o.updateMatrix(); canopy.setMatrixAt(i,o.matrix); trunk.setMatrixAt(i,o.matrix); }
+  });
+  scene.add(canopy); scene.add(trunk);
+  // frutales
+  var fr=[]; [rect(94,-200,152,-112),rect(94,-106,152,-44),rect(94,-38,152,22),rect(158,-200,215,-44),rect(158,-38,215,22),rect(100,30,215,98)].forEach(function(b){
+    for (var x=b[0][0]+2;x<b[1][0];x+=4) for (var z=b[0][1]+2;z<b[2][1]-1;z+=3.2) if (distToLine(x,z,CREEK)>8 && R()>.04) fr.push([x,z]); });
+  var orch = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0), new THREE.MeshLambertMaterial({flatShading:true}), fr.length);
+  orch.castShadow = true;
+  var oc = [new THREE.Color("#4f7b36"), new THREE.Color("#5f8a3c"), new THREE.Color("#46702f")];
+  fr.forEach(function(p,i){ var s=1.2+R()*.35; o.position.set(p[0],s*1.05,p[1]); o.rotation.set(0,R()*6,0); o.scale.set(s,s*1.05,s); o.updateMatrix(); orch.setMatrixAt(i,o.matrix); orch.setColorAt(i,oc[i%3]); });
+  scene.add(orch);
+})();
+
+// palmeras
+function palm(x,z,h){
+  h=h||6; var g=new THREE.Group();
+  var tr=new THREE.Mesh(new THREE.CylinderGeometry(.2,.32,h,7), lam(0x7a6a52)); tr.position.y=h/2; tr.castShadow=true; g.add(tr);
+  var fg=new THREE.BoxGeometry(.7,.06,3.4); fg.translate(0,0,1.7);
+  var fm=lam(0x5c8f3a);
+  for (var i=0;i<9;i++){ var f=new THREE.Mesh(fg,fm); f.position.y=h; f.rotation.order="YXZ"; f.rotation.y=i/9*Math.PI*2+R()*.3; f.rotation.x=.38+R()*.25; f.castShadow=true; g.add(f); }
+  g.position.set(x,0,z); scene.add(g);
+}
+[-11,-6.5,-2,2.5,7,11.5].forEach(function(z){ palm(-16.4,z,5.6+R()*1.6); });
+palm(-1.6,-0.6,5.2); palm(1.2,4.6,6);
+palm(-35,-28,4.6); palm(-35,-18,4.8);
+
+// carretas antiguas
+function carreta(x,z,rot){
+  var g=new THREE.Group();
+  var bed=new THREE.Mesh(new THREE.BoxGeometry(2.4,.16,3.4), M.wood); bed.position.y=1.15; g.add(bed);
+  [-1.15,1.15].forEach(function(sx){ var side=new THREE.Mesh(new THREE.BoxGeometry(.1,.55,3.4),M.wood); side.position.set(sx,1.45,0); g.add(side);
+    var wh=new THREE.Mesh(new THREE.TorusGeometry(.95,.09,6,16), M.woodDark); wh.rotation.y=Math.PI/2; wh.position.set(sx*1.12,.95,.2); g.add(wh); });
+  var lanza=new THREE.Mesh(new THREE.BoxGeometry(.14,.14,3.6),M.wood); lanza.position.set(0,.85,-3.3); lanza.rotation.x=-.12; g.add(lanza);
+  g.children.forEach(function(c){ c.castShadow=true; });
+  g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
+}
+carreta(-27,-31,-0.3);
+
+// portón de entrada con cartel
+(function(){
+  box(.45,3.4,.45,M.woodDark,-38.6,1.7,-27.6); box(.45,3.4,.45,M.woodDark,-38.6,1.7,-18.4);
+  box(.35,.35,9.6,M.woodDark,-38.6,3.5,-23);
+  var cv=document.createElement("canvas"); cv.width=512; cv.height=96; var g=cv.getContext("2d");
+  g.fillStyle="#efe3c2"; g.fillRect(0,0,512,96); g.strokeStyle="#8a2b1f"; g.lineWidth=8; g.strokeRect(4,4,504,88);
+  g.fillStyle="#5a1d12"; g.font="700 46px Georgia, serif"; g.textAlign="center"; g.textBaseline="middle"; g.fillText("LAS CARRETAS",256,52);
+  var tex=new THREE.CanvasTexture(cv);
+  var sign=new THREE.Mesh(new THREE.BoxGeometry(.12,1.1,5.6), [lam(0xefe3c2),lam(0xefe3c2),lam(0xefe3c2),lam(0xefe3c2),new THREE.MeshLambertMaterial({map:tex}),new THREE.MeshLambertMaterial({map:tex})]);
+  sign.rotation.y=Math.PI/2; sign.position.set(-38.6,2.85,-23); sign.castShadow=true; scene.add(sign);
+  // ojo: tras rotar, las caras ±z miran a ±x (ruta y casona)
+})();
+
+// puente sobre el arroyo
+(function(){
+  var i0=0, best=1e9; ROAD.forEach(function(p,i){ var d=distToLine(p[0],p[1],CREEK); if(d<best){best=d;i0=i;} });
+  var a=ROAD[Math.max(0,i0-3)], b=ROAD[Math.min(ROAD.length-1,i0+3)], ang=Math.atan2(b[0]-a[0], b[1]-a[1]);
+  var c=ROAD[i0];
+  [-4.3,4.3].forEach(function(off){ var m=new THREE.Mesh(new THREE.BoxGeometry(.3,.9,16), M.stone); m.position.set(c[0]+Math.cos(ang)*off, .45, c[1]-Math.sin(ang)*off); m.rotation.y=ang; m.castShadow=true; scene.add(m); });
+})();
+
+// agua del laguito y juncos
+(function(){
+  var sh=new THREE.Shape(); LAGO.forEach(function(p,i){ if(i) sh.lineTo(p[0],-p[1]); else sh.moveTo(p[0],-p[1]); });
+  var geo=new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI/2);
+  var water=new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color:0x4f8f9a, shininess:90, specular:0x9fc7cf, transparent:true, opacity:.92}));
+  water.position.y=0.06; water.receiveShadow=true; scene.add(water);
+  var reedGeo=new THREE.ConeGeometry(.12,1,4); reedGeo.translate(0,.5,0);
+  var edge=scalePoly(LAGO,1.06), n=0, list=[];
+  for (var i=0;i<edge.length;i++){ if (R()<.55) continue; for (var j=0;j<4;j++) list.push([edge[i][0]+(R()-.5)*1.3, edge[i][1]+(R()-.5)*1.3, .7+R()*.9]); }
+  var reeds=new THREE.InstancedMesh(reedGeo, lam(0x6f8a3a), list.length); var o=new THREE.Object3D();
+  list.forEach(function(r,k){ o.position.set(r[0],0,r[1]); o.rotation.set((R()-.5)*.3,0,(R()-.5)*.3); o.scale.set(1,r[2],1); o.updateMatrix(); reeds.setMatrixAt(k,o.matrix); });
+  reeds.castShadow=true; scene.add(reeds);
+})();
+
+// los dos árboles enormes (coníferas frondosas, como en la foto desde el noroeste)
+(function(){
+  var blob=new THREE.IcosahedronGeometry(1,1);
+  function bigTree(x,z,h,r,cols,shape,n){
+    var g=new THREE.Group();
+    var tr=new THREE.Mesh(new THREE.CylinderGeometry(.4,.9,h*.8,7), lam(0x4e3a2a)); tr.position.y=h*.4; tr.castShadow=true; g.add(tr);
+    var mats=cols.map(function(c){ return new THREE.MeshLambertMaterial({color:c, flatShading:true}); });
+    for (var i=0;i<n;i++){
+      var t=Math.pow(R(),.85), y=h*(.1+t*.86);
+      var env = shape==="col" ? r*Math.max(.25, 1-Math.pow((t-.42)/.62,2)) : r*Math.max(.2, 1-t*.78);
+      var a=R()*Math.PI*2, d=env*Math.sqrt(R())*.8, sz=(shape==="col"?2.1:2.6)+R()*1.6;
+      var m=new THREE.Mesh(blob, mats[Math.floor(R()*mats.length)]);
+      m.position.set(Math.cos(a)*d, y, Math.sin(a)*d);
+      m.scale.set(sz, sz*(shape==="col"?1.55:1.05), sz); m.rotation.set(R(),R(),R());
+      m.castShadow=true; m.receiveShadow=true; g.add(m);
+    }
+    g.position.set(x,0,z); scene.add(g);
+  }
+  // izquierda en la foto (hacia el noreste): columnar, ramas colgantes, verde claro
+  bigTree(BIGTREES.cx+4.5, BIGTREES.cz-4.5, 21, 6, [0x7aa63e,0x88b247,0x6b9636], "col", 46);
+  // derecha en la foto (hacia el suroeste): ancha y más oscura
+  bigTree(BIGTREES.cx-4, BIGTREES.cz+4, 24, 8.5, [0x4d7d2b,0x5a8c31,0x6f9e3a], "cone", 60);
+})();
+
+// pérgola de Masajes: hexagonal, caños oscuros, baranda baja y techo de hojas de palma secas
+(function(){
+  var r2=rng(77), g=new THREE.Group(), RAD=3.4, H=2.7;
+  var metal=lam(0x2f2c28), thatch=new THREE.MeshLambertMaterial({color:0x5e5643, flatShading:true}), thatch2=new THREE.MeshLambertMaterial({color:0x7a7058, flatShading:true});
+  var V=[]; for (var i=0;i<6;i++){ var a=i/6*Math.PI*2; V.push([Math.cos(a)*RAD, Math.sin(a)*RAD]); }
+  var postGeo=new THREE.CylinderGeometry(.05,.05,H,6);
+  V.forEach(function(q){ var m=new THREE.Mesh(postGeo,metal); m.position.set(q[0],H/2,q[1]); m.castShadow=true; g.add(m); });
+  for (var i=0;i<6;i++){ var A=V[i], B=V[(i+1)%6], len=Math.hypot(B[0]-A[0],B[1]-A[1]), ang=Math.atan2(B[1]-A[1],B[0]-A[0]);
+    [.75,H].forEach(function(y){ var m=new THREE.Mesh(new THREE.BoxGeometry(len,.05,.05),metal); m.position.set((A[0]+B[0])/2,y,(A[1]+B[1])/2); m.rotation.y=-ang; g.add(m); }); }
+  // techo: cono de 6 lados, bajo y abombado, alineado con los postes
+  var roof=new THREE.Mesh(new THREE.ConeGeometry(RAD*1.3,1.5,6,1), thatch); roof.rotation.y=Math.PI/2; roof.position.y=H+.75; roof.castShadow=true; roof.receiveShadow=true; g.add(roof);
+  var top=new THREE.Mesh(new THREE.ConeGeometry(RAD*.7,.75,6,1), thatch2); top.rotation.y=Math.PI/2; top.position.y=H+1.35; g.add(top);
+  // flecos de hojas colgando por los seis bordes
+  var fr=[], ER=RAD*1.22; for (var i=0;i<6;i++){ var a0=i/6*Math.PI*2, a1=(i+1)/6*Math.PI*2, P0=[Math.cos(a0)*ER,Math.sin(a0)*ER], P1=[Math.cos(a1)*ER,Math.sin(a1)*ER];
+    for (var k=0;k<11;k++){ var t=(k+.5)/11; fr.push([P0[0]+(P1[0]-P0[0])*t+(r2()-.5)*.3, P0[1]+(P1[1]-P0[1])*t+(r2()-.5)*.3, .7+r2()*.9]); } }
+  var fg=new THREE.ConeGeometry(.28,1,4); fg.rotateX(Math.PI); fg.translate(0,-.5,0);
+  var fringe=new THREE.InstancedMesh(fg, thatch, fr.length), o=new THREE.Object3D();
+  fr.forEach(function(f,i){ o.position.set(f[0],H+.15,f[1]); o.rotation.set((r2()-.5)*.4,r2()*3,(r2()-.5)*.4); o.scale.set(1,f[2],1); o.updateMatrix(); fringe.setMatrixAt(i,o.matrix); });
+  fringe.castShadow=true; g.add(fringe);
+  g.position.set(PERGOLA.cx,0,PERGOLA.cz); g.rotation.y=PERGOLA.rot; scene.add(g);
+})();
+
+// pérgola cuadrada tapada de enredaderas
+(function(){
+  var r2=rng(909), g=new THREE.Group(), S=PERGOLA2.s/2, H=2.7;
+  var leafs=[0x7aa63e,0x88b247,0x6c9a37,0x95bd52].map(function(c){ return new THREE.MeshLambertMaterial({color:c, flatShading:true}); });
+  var wood=lam(0x5a4632), blob=new THREE.IcosahedronGeometry(1,1);
+  function leaf(x,y,z,sx,sy,sz){ var m=new THREE.Mesh(blob, leafs[Math.floor(r2()*leafs.length)]); m.position.set(x,y,z); m.scale.set(sx,sy,sz); m.rotation.set(r2(),r2(),r2()); m.castShadow=true; m.receiveShadow=true; g.add(m); }
+  // vigas de madera
+  [[0,-S,PERGOLA2.s+.6,0],[0,S,PERGOLA2.s+.6,0],[-S,0,PERGOLA2.s+.6,1],[S,0,PERGOLA2.s+.6,1]].forEach(function(q){ var m=new THREE.Mesh(new THREE.BoxGeometry(q[3]?.18:q[2],.22,q[3]?q[2]:.18),wood); m.position.set(q[0],H,q[1]); m.castShadow=true; g.add(m); });
+  for (var i=-1;i<=1;i++){ var m=new THREE.Mesh(new THREE.BoxGeometry(PERGOLA2.s+.4,.14,.12),wood); m.position.set(0,H+.15,i*S*.6); g.add(m); }
+  // columnas de follaje en las cuatro esquinas
+  [[-S,-S],[S,-S],[S,S],[-S,S]].forEach(function(c){
+    for (var k=0;k<4;k++){ var y=.45+k*.62; leaf(c[0]+(r2()-.5)*.15, y, c[1]+(r2()-.5)*.15, .62+r2()*.12, .55, .62+r2()*.12); }
+    leaf(c[0], .25, c[1], .75, .35, .75);
+  });
+  // enredadera sobre las vigas (bordes llenos, centro más ralo) y algún colgante
+  for (var e=0;e<4;e++){ for (var k=0;k<6;k++){ var t=(k+.5)/6*2-1, x, z;
+    if (e===0){ x=t*S; z=-S; } else if (e===1){ x=S; z=t*S; } else if (e===2){ x=-t*S; z=S; } else { x=-S; z=-t*S; }
+    leaf(x+(r2()-.5)*.3, H+.25+r2()*.15, z+(r2()-.5)*.3, .55+r2()*.2, .32, .55+r2()*.2);
+    if (r2()<.35) leaf(x, H-.45-r2()*.4, z, .3, .45, .3); } }
+  for (var k=0;k<5;k++) leaf((r2()-.5)*S*1.2, H+.3, (r2()-.5)*S*1.2, .7, .25, .7);
+  g.position.set(PERGOLA2.cx,0,PERGOLA2.cz); g.rotation.y=PERGOLA2.rot; scene.add(g);
+})();
+
+// alambrado rural: postes de madera cada 3 m y cuatro hilos de alambre
+(function(){
+  var post=lam(0x6b5236), wire=lam(0x9aa0a3), posts=[], z;
+  for (z=FENCE.z0; z>=FENCE.z1; z-=3){ if (z<FENCE.gap[1] && z>FENCE.gap[0]) continue; posts.push(z); }
+  var pg=new THREE.CylinderGeometry(.07,.08,1.25,6); pg.translate(0,.62,0);
+  var pm=new THREE.InstancedMesh(pg, post, posts.length), o=new THREE.Object3D();
+  posts.forEach(function(z,i){ o.position.set(FENCE.x,0,z); o.rotation.set(0,0,0); o.scale.set(1,1,1); o.updateMatrix(); pm.setMatrixAt(i,o.matrix); });
+  pm.castShadow=true; scene.add(pm);
+  // tramos de alambre (cortados en la tranquera)
+  [[FENCE.z0, FENCE.gap[1]],[FENCE.gap[0], FENCE.z1]].forEach(function(seg){
+    var len=Math.abs(seg[0]-seg[1]), mz=(seg[0]+seg[1])/2;
+    [.35,.62,.88,1.12].forEach(function(y){ var w=new THREE.Mesh(new THREE.BoxGeometry(.025,.025,len), wire); w.position.set(FENCE.x,y,mz); scene.add(w); });
+  });
+})();
+
+// juegos de niños: hamaca de caño en A con dos asientos, palmera y farol
+(function(){
+  var g=new THREE.Group(), pipe=lam(0x7d6b45), chain=lam(0x8b8f91), seat=lam(0x3a3632), W=3.4, H=2.6, sp=1.0;
+  var leg=new THREE.CylinderGeometry(.045,.045,Math.hypot(H,sp),6);
+  [-W/2,W/2].forEach(function(x){ [-1,1].forEach(function(sd){ var m=new THREE.Mesh(leg,pipe); m.position.set(x,H/2,sd*sp/2); m.rotation.x=sd*Math.atan2(sp/2,H); m.castShadow=true; g.add(m); }); });
+  var bar=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,W+.2,6),pipe); bar.rotation.z=Math.PI/2; bar.position.y=H; bar.castShadow=true; g.add(bar);
+  [-.8,.8].forEach(function(x){ [-.2,.2].forEach(function(dz){ var c=new THREE.Mesh(new THREE.BoxGeometry(.02,H-.5,.02),chain); c.position.set(x,(H+.5)/2,dz); g.add(c); });
+    var st=new THREE.Mesh(new THREE.BoxGeometry(.5,.05,.42),seat); st.position.set(x,.5,0); st.castShadow=true; g.add(st); });
+  g.position.set(JUEGOS.cx,0,JUEGOS.cz); g.rotation.y=JUEGOS.rot; scene.add(g);
+  palm(JUEGOS.cx-4.5, JUEGOS.cz+1.5, 6.5);
+  var lp=new THREE.Group(), pole=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,2.6,6), lam(0x2e2b28)); pole.position.y=1.3; lp.add(pole);
+  var lan=new THREE.Mesh(new THREE.CylinderGeometry(.16,.12,.4,6), new THREE.MeshLambertMaterial({color:0xf3efe0, emissive:0x2a2618})); lan.position.y=2.75; lp.add(lan);
+  var cap=new THREE.Mesh(new THREE.ConeGeometry(.22,.18,6), lam(0x2e2b28)); cap.position.y=3.0; lp.add(cap);
+  lp.position.set(JUEGOS.cx-9, 0, JUEGOS.cz-2.5); lp.children.forEach(function(c){ c.castShadow=true; }); scene.add(lp);
+})();
+
+// arcos de la cancha
+(function(){
+  var post=M.white, net=new THREE.MeshLambertMaterial({color:0xffffff, transparent:true, opacity:.28, side:THREE.DoubleSide});
+  [-1,1].forEach(function(sd){
+    var g=new THREE.Group();
+    [-2.5,2.5].forEach(function(z){ var m=new THREE.Mesh(new THREE.BoxGeometry(.14,2,.14),post); m.position.set(0,1,z); m.castShadow=true; g.add(m); });
+    var bar=new THREE.Mesh(new THREE.BoxGeometry(.14,.14,5.14),post); bar.position.set(0,2,0); bar.castShadow=true; g.add(bar);
+    var back=new THREE.Mesh(new THREE.PlaneGeometry(5,2.2),net); back.rotation.y=Math.PI/2; back.rotation.z=0; back.position.set(sd*1,1,0); back.rotation.x=0; g.add(back);
+    back.rotateX(0); back.lookAt(sd*10,1,0);
+    var top=new THREE.Mesh(new THREE.PlaneGeometry(1,5),net); top.rotation.x=-Math.PI/2; top.position.set(sd*.5,2,0); g.add(top);
+    g.position.set(sd*FIELD.len/2,0,0);
+    var holder=new THREE.Group(); holder.add(g); holder.position.set(FIELD.cx,0,FIELD.cz); holder.rotation.y=FIELD.rot; scene.add(holder);
+  });
+})();
+
+/* ---------- etiquetas ---------- */
+var labelsEl = $("labels");
+var places = [
+  {t:"Casona · 1877", p:[3,8,27], c:"big"},
+  {t:"Cancha de fútbol", p:[54,1,-76]},
+  {t:"Laguito", p:[7,1.5,-60], c:"water"},
+  {t:"Estacionamiento", p:[-24,1,21]},
+  {t:"Entrada", p:[-38.6,5.4,-23]},
+  {t:"Ruta 36", p:[-42,1,-165], c:"road"},
+  {t:"Ruta 36 · hacia Montevideo", p:[-8,1,172], c:"road"},
+  {t:"Arroyo Las Piedras", p:[30,7,48], c:"water"},
+  {t:"Frutales", p:[125,3,-70]}
+];
+places.forEach(function(pl){ var d=document.createElement("div"); d.className="place "+(pl.c||""); d.textContent=pl.t; labelsEl.appendChild(d); pl.el=d; pl.v=new THREE.Vector3(pl.p[0],pl.p[1],pl.p[2]); });
+
+/* ---------- atracciones ---------- */
+var pinObjs = {};
+var selected = null;
+var stickGeo = new THREE.CylinderGeometry(.14,.14,10,6); stickGeo.translate(0,5,0);
+var headGeo = new THREE.SphereGeometry(1.05,16,12);
+var ringGeo = new THREE.RingGeometry(1.4,2.3,32); ringGeo.rotateX(-Math.PI/2);
+function makePin(p){
+  var g=new THREE.Group(); var mat=lam(p.color); var ringMat=new THREE.MeshBasicMaterial({color:p.color, transparent:true, opacity:.75});
+  var st=new THREE.Mesh(stickGeo, lam(0xf6f3ea)); st.castShadow=true; g.add(st);
+  var hd=new THREE.Mesh(headGeo, mat); hd.position.y=10.4; hd.castShadow=true; g.add(hd);
+  var rg=new THREE.Mesh(ringGeo, ringMat); rg.position.y=.12; g.add(rg);
+  g.position.set(p.x,0,p.z); scene.add(g);
+  var el=document.createElement("button"); el.className="pin"; el.type="button"; el.style.setProperty("--c",p.color);
+  el.innerHTML='<b></b><span></span>'; labelsEl.appendChild(el);
+  var obj={g:g, mat:mat, ringMat:ringMat, el:el, v:new THREE.Vector3()};
+  el.addEventListener("pointerdown", function(e){ onPinDown(e,p); });
+  el.addEventListener("click", function(){ if (!dragMoved) select(p.id, !EDIT); });
+  pinObjs[p.id]=obj;
+}
+function syncPins(){
+  if (typeof syncAreaLabels==="function") syncAreaLabels();
+  var seen={};
+  STATE.pins.forEach(function(p,i){
+    if (!pinObjs[p.id]) makePin(p);
+    var o=pinObjs[p.id]; seen[p.id]=1;
+    o.g.position.set(p.x,0,p.z); o.mat.color.set(p.color); o.ringMat.color.set(p.color);
+    o.el.style.setProperty("--c",p.color);
+    o.el.querySelector("b").textContent=i+1; o.el.querySelector("span").textContent=p.name||"Sin nombre";
+    o.el.setAttribute("aria-label", (i+1)+". "+(p.name||"Sin nombre"));
+    o.el.classList.toggle("on", selected===p.id);
+  });
+  Object.keys(pinObjs).forEach(function(id){ if(!seen[id]){ scene.remove(pinObjs[id].g); pinObjs[id].el.remove(); delete pinObjs[id]; } });
+}
+
+/* ---------- áreas temáticas ---------- */
+if (!STATE.areas) STATE.areas=[];
+var AREA_PALETTE=["#e2b445","#2f9e6b","#e07a1f","#7b4fb5","#2f7fbf","#c2357a","#d9482b","#3b4a54"];
+var stripeTex=(function(){ var c=document.createElement("canvas"); c.width=c.height=64; var g=c.getContext("2d");
+  g.fillStyle="rgba(255,255,255,.5)"; g.fillRect(0,0,64,64); g.strokeStyle="#fff"; g.lineWidth=12;
+  for (var i=-64;i<=128;i+=32){ g.beginPath(); g.moveTo(i,64); g.lineTo(i+64,0); g.stroke(); }
+  var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1/5,1/5); return t; })();
+var areaObjs={}, selectedArea=null, drawing=null, handles=[], dragV=null;
+function areaById(id){ return STATE.areas.filter(function(a){ return a.id===id; })[0]; }
+function centroid(pts){
+  var A=0, cx=0, cz=0; for (var i=0;i<pts.length;i++){ var p=pts[i], q=pts[(i+1)%pts.length], f=p[0]*q[1]-q[0]*p[1]; A+=f; cx+=(p[0]+q[0])*f; cz+=(p[1]+q[1])*f; }
+  if (Math.abs(A)<1e-6){ var sx=0, sz=0; pts.forEach(function(p){ sx+=p[0]; sz+=p[1]; }); return [sx/pts.length, sz/pts.length]; }
+  return [cx/(3*A), cz/(3*A)];
+}
+function disposeGroup(g){ scene.remove(g); g.traverse(function(o){ if (o.geometry) o.geometry.dispose(); if (o.material && o.material!==undefined && o.material.dispose) o.material.dispose(); }); }
+function buildAreaGroup(a, open){
+  var g=new THREE.Group(), n=a.points.length;
+  if (n>=3){
+    var sh=new THREE.Shape(); a.points.forEach(function(p,i){ if(i) sh.lineTo(p[0],-p[1]); else sh.moveTo(p[0],-p[1]); });
+    var geo=new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI/2);
+    var fill=new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:a.color, map:stripeTex, transparent:true, opacity:.45, depthWrite:false}));
+    fill.position.y=.2; fill.renderOrder=2; g.add(fill);
+  }
+  var bm=new THREE.MeshBasicMaterial({color:a.color}), segs = (n>=3 && !open) ? n : n-1;
+  for (var i=0;i<segs;i++){ var A=a.points[i], B=a.points[(i+1)%n], len=Math.hypot(B[0]-A[0],B[1]-A[1]); if (len<.01) continue;
+    var m=new THREE.Mesh(new THREE.BoxGeometry(len,.08,.6), bm); m.position.set((A[0]+B[0])/2,.26,(A[1]+B[1])/2); m.rotation.y=-Math.atan2(B[1]-A[1],B[0]-A[0]); g.add(m); }
+  scene.add(g); return g;
+}
+function syncAreas(){
+  var seen={};
+  STATE.areas.forEach(function(a){
+    seen[a.id]=1; var o=areaObjs[a.id];
+    if (!o){ var el=document.createElement("button"); el.type="button"; el.className="zone"; labelsEl.appendChild(el);
+      el.addEventListener("click", function(){ selectArea(a.id, !EDIT); });
+      o=areaObjs[a.id]={el:el, v:new THREE.Vector3()}; }
+    if (o.g) disposeGroup(o.g);
+    o.g = (drawing && drawing.target===a.id) ? null : buildAreaGroup(a,false);
+    o.el.hidden = !!(drawing && drawing.target===a.id) || a.points.length<3;
+    o.el.textContent=a.name||"Área sin nombre"; o.el.style.setProperty("--c",a.color);
+    o.el.classList.toggle("on", selectedArea===a.id);
+    var c=labelSpot(a); o.v.set(c[0],1.2,c[1]);
+  });
+  Object.keys(areaObjs).forEach(function(id){ if (id!=="__draw" && !seen[id]){ var o=areaObjs[id]; if (o.g) disposeGroup(o.g); o.el.remove(); delete areaObjs[id]; } });
+  if (areaObjs.__draw){ disposeGroup(areaObjs.__draw.g); delete areaObjs.__draw; }
+  if (drawing && drawing.points.length) areaObjs.__draw={g:buildAreaGroup({points:drawing.points, color:drawing.color}, drawing.points.length<3)};
+}
+function rebuildHandles(){
+  handles.forEach(function(h){ h.el.remove(); }); handles=[];
+  function mk(a, idx, mid, first){
+    var el=document.createElement("button"); el.type="button"; el.className="vh"+(mid?" mid":"")+(first?" first":""); el.style.setProperty("--c",a.color);
+    el.setAttribute("aria-label", mid?"Agregar un punto acá":"Mover este punto");
+    var h={el:el, a:a, idx:idx, mid:mid}; labelsEl.appendChild(el); handles.push(h);
+    if (drawing){ if (first) el.addEventListener("click", function(){ finishDrawing(); }); return; }
+    el.addEventListener("pointerdown", function(e){ e.preventDefault(); e.stopPropagation(); dragV=h; dragMoved=false; controls.enabled=false; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
+    if (!mid) el.addEventListener("dblclick", function(){ if (a.points.length>3){ a.points.splice(idx,1); areaEdited(); syncAreas(); rebuildHandles(); } });
+  }
+  if (drawing){ var d={points:drawing.points, color:drawing.color}; drawing.points.forEach(function(p,i){ mk(d,i,false,i===0&&drawing.points.length>=3); }); return; }
+  if (!EDIT || !selectedArea) return;
+  var a=areaById(selectedArea); if (!a) return;
+  a.points.forEach(function(p,i){ mk(a,i,false,false); mk(a,i,true,false); });
+}
+function handlePos(h){
+  var P=h.a.points, n=P.length; if (!h.mid) return P[h.idx];
+  var A=P[h.idx], B=P[(h.idx+1)%n]; return [(A[0]+B[0])/2,(A[1]+B[1])/2];
+}
+function areaEdited(){ STATE.areasDraft=false; dirty(); }
+function selectArea(id, fly){
+  selectedArea=id; syncAreas(); rebuildHandles();
+  document.querySelectorAll(".aedit").forEach(function(b){ var on=b.dataset.aid===id; b.classList.toggle("on",on); if (on && !b.contains(document.activeElement)) b.scrollIntoView({block:"nearest", behavior: REDUCED?"auto":"smooth"}); });
+  document.querySelectorAll(".aitem").forEach(function(b){ b.classList.toggle("on", b.dataset.aid===id); });
+  var a=areaById(id); if (!a || !fly) return;
+  var c=centroid(a.points), r=0; a.points.forEach(function(p){ r=Math.max(r, Math.hypot(p[0]-c[0],p[1]-c[1])); });
+  var dir=camera.position.clone().sub(controls.target); dir.setLength(Math.max(70, r*2.6));
+  flyTo(new THREE.Vector3(c[0],0,c[1]), new THREE.Vector3(c[0],0,c[1]).add(dir));
+}
+function labelSpot(a){
+  /* punto dentro del área lo más lejos posible de los globos, sin alejarse mucho del centro */
+  var P=a.points; if (P.length<3) return centroid(P);
+  var c=centroid(P), xs=P.map(function(p){return p[0];}), zs=P.map(function(p){return p[1];});
+  var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs), z0=Math.min.apply(null,zs), z1=Math.max.apply(null,zs);
+  var best=c, bestScore=-1e9, step=Math.max(2,Math.min(x1-x0,z1-z0)/10), cands=[];
+  for (var x=x0+step/2; x<x1; x+=step) for (var z=z0+step/2; z<z1; z+=step){
+    if (!inPoly(x,z,P)) continue;
+    var dp=1e9; STATE.pins.forEach(function(q){ dp=Math.min(dp, Math.hypot(q.x-x, q.z-z)); });
+    var de=1e9; for (var i=0;i<P.length;i++){ var A=P[i], B=P[(i+1)%P.length]; de=Math.min(de, distToLine(x,z,[A,B])); }
+    var sc=Math.min(dp,22)*1.0 + Math.min(de,8)*0.8 - Math.hypot(x-c[0],z-c[1])*0.25;
+    if (sc>bestScore){ bestScore=sc; best=[x,z]; }
+    cands.push([x,z,sc]);
+  }
+  cands.sort(function(p,q){ return q[2]-p[2]; }); a.__cands=cands.slice(0,40);
+  return best;
+}
+function syncAreaLabels(){ if (!areaObjs || !STATE.areas) return; STATE.areas.forEach(function(a){ var o=areaObjs[a.id]; if (o && o.v){ var c=labelSpot(a); o.v.set(c[0],1.2,c[1]); } }); }
+function pinsIn(a){ return STATE.pins.filter(function(p){ return a.points.length>=3 && inPoly(p.x,p.z,a.points); }); }
+function startDrawing(a){
+  setPlacing(false);
+  drawing={target:a?a.id:null, points:[], color:a?a.color:AREA_PALETTE[STATE.areas.length%AREA_PALETTE.length]};
+  selectedArea=null; document.body.classList.add("placing"); updateDrawBar(); syncAreas(); rebuildHandles();
+  document.querySelectorAll(".aedit").forEach(function(b){ b.classList.remove("on"); });
+}
+function updateDrawBar(){
+  var n=drawing.points.length;
+  bar(n<3 ? "Tocá el mapa para marcar las esquinas del área ("+n+" de mínimo 3)" : "Seguí marcando esquinas o tocá «Terminar» ("+n+" puntos)",
+    [{t:"Deshacer", f:function(){ drawing.points.pop(); updateDrawBar(); syncAreas(); rebuildHandles(); }, dis:!n},
+     {t:"Terminar", p:1, f:finishDrawing, dis:n<3},
+     {t:"Cancelar", f:cancelDrawing}]);
+}
+function finishDrawing(){
+  if (!drawing || drawing.points.length<3) return;
+  var a;
+  if (drawing.target){ a=areaById(drawing.target); a.points=drawing.points; }
+  else { a={id:"a"+Date.now().toString(36), name:"Nueva área", color:drawing.color, points:drawing.points}; STATE.areas.push(a); }
+  drawing=null; document.body.classList.remove("placing"); bar(null);
+  selectedArea=a.id; syncAreas(); rebuildHandles(); renderList(); areaEdited();
+  var inp=$("an-"+a.id); if (inp){ inp.scrollIntoView({block:"nearest"}); inp.focus(); inp.select(); }
+  setStatus("Área lista. Ponele nombre y color; arrastrá los puntos blancos para ajustar el borde.");
+}
+function cancelDrawing(){ drawing=null; document.body.classList.remove("placing"); bar(null); syncAreas(); rebuildHandles(); }
+function addDrawPoint(x,z){
+  var P=drawing.points;
+  if (P.length>=3 && Math.hypot(x-P[0][0], z-P[0][1])<2.5){ finishDrawing(); return; }
+  P.push([Math.round(x*2)/2, Math.round(z*2)/2]); updateDrawBar(); syncAreas(); rebuildHandles();
+}
+
+/* ---------- panel ---------- */
+function renderHeader(){ $("ev-title").textContent=STATE.title||"Mapa del evento"; $("ev-sub").textContent=STATE.subtitle||""; }
+function renderList(){
+  var sc=$("scroll"), keepTop=sc.scrollTop; sc.innerHTML="";
+  if (!EDIT){
+    if (STATE.areas.length){
+      var h1=document.createElement("p"); h1.className="sec"; h1.textContent="Áreas"; sc.appendChild(h1);
+      var ul=document.createElement("ul"); ul.className="alist";
+      STATE.areas.forEach(function(a){
+        var inc=pinsIn(a).map(function(p){ return p.name; }).filter(Boolean);
+        var li=document.createElement("li");
+        li.innerHTML='<button class="item aitem" type="button" data-aid="'+esc(a.id)+'"><span class="sq" style="--c:'+esc(a.color)+'"></span><span><strong>'+esc(a.name||"Área sin nombre")+'</strong>'+(inc.length?'<span class="inc">'+esc(inc.join(" · "))+'</span>':'')+'</span></button>';
+        li.firstChild.addEventListener("click", function(){ selectArea(a.id, true); });
+        li.firstChild.classList.toggle("on", selectedArea===a.id);
+        ul.appendChild(li);
+      });
+      sc.appendChild(ul);
+      var h2=document.createElement("p"); h2.className="sec"; h2.textContent="Atracciones"; sc.appendChild(h2);
+    }
+    var ol=document.createElement("ol"); ol.id="list";
+    STATE.pins.forEach(function(p,i){
+      var li=document.createElement("li");
+      li.innerHTML='<button class="item" type="button" data-id="'+esc(p.id)+'"><span class="num" style="--c:'+esc(p.color)+'">'+(i+1)+'</span><span><strong>'+esc(p.name||"Sin nombre")+'</strong>'+(p.desc?'<span class="d">'+esc(p.desc)+'</span>':'')+'</span></button>';
+      li.firstChild.addEventListener("click", function(){ select(p.id, true); });
+      li.firstChild.classList.toggle("on", selected===p.id);
+      ol.appendChild(li);
+    });
+    sc.appendChild(ol); return;
+  }
+  var wrap=document.createElement("div");
+  wrap.innerHTML='<p class="note">'+(STATE.examples?'Estas atracciones son ejemplos: cambialas por las tuyas. ':'')+'Para mover una atracción, arrastrá su globo. Para agregar una, tocá «+ Agregar atracción» y después el lugar en el mapa. Para marcar un área, tocá «+ Nueva área» y marcá sus esquinas en el mapa. Nada cambia para los invitados hasta que guardes.</p>'+
+   '<div class="field"><label for="f-title">Título</label><input type="text" id="f-title"></div>'+
+   '<div class="field"><label for="f-sub">Subtítulo</label><input type="text" id="f-sub"></div>';
+  sc.appendChild(wrap);
+  $("f-title").value=STATE.title||""; $("f-sub").value=STATE.subtitle||"";
+  $("f-title").addEventListener("input", function(e){ STATE.title=e.target.value; renderHeader(); dirty(); });
+  $("f-sub").addEventListener("input", function(e){ STATE.subtitle=e.target.value; renderHeader(); dirty(); });
+  var ah=document.createElement("p"); ah.className="sec"; ah.textContent="Áreas temáticas"; sc.appendChild(ah);
+  if (STATE.areasDraft){ var an=document.createElement("p"); an.className="note"; an.textContent="Estas 4 áreas son un borrador que ubiqué según tus atracciones. Cambiales el nombre, redibujalas o ajustá sus puntos."; sc.appendChild(an); }
+  var aul=document.createElement("ul"); aul.className="alist";
+  STATE.areas.forEach(function(a){
+    var li=document.createElement("li"); li.className="eitem aedit"+(selectedArea===a.id?" on":""); li.dataset.aid=a.id;
+    li.innerHTML='<div class="row"><span class="sq" style="--c:'+esc(a.color)+'"></span><input type="text" id="an-'+esc(a.id)+'" aria-label="Nombre del área"><button class="btn small ghost" type="button" data-act="del">Borrar</button></div>'+
+      '<div class="bottom"><div class="sw" role="group" aria-label="Color del área">'+AREA_PALETTE.map(function(c){ return '<button type="button" style="--c:'+c+'" data-c="'+c+'" aria-label="Color '+c+'" aria-pressed="'+(c===a.color)+'"></button>'; }).join("")+'</div>'+
+      '<div class="mini"><button class="btn small" type="button" data-act="redraw">Redibujar</button><button class="btn small" type="button" data-act="go">Ver</button></div></div>'+
+      (selectedArea===a.id?'<p class="ahint">Arrastrá los puntos en el mapa para ajustar el borde. Los puntos chicos agregan una esquina; doble clic en una esquina la quita.</p>':'');
+    li.querySelector("input").value=a.name||"";
+    li.querySelector("input").addEventListener("input", function(e){ a.name=e.target.value; syncAreas(); areaEdited(); });
+    li.querySelector("input").addEventListener("focus", function(){ if (selectedArea!==a.id){ selectedArea=a.id; syncAreas(); rebuildHandles(); document.querySelectorAll(".aedit").forEach(function(b){ b.classList.toggle("on", b.dataset.aid===a.id); }); } });
+    li.querySelectorAll(".sw button").forEach(function(b){ b.addEventListener("click", function(){ a.color=b.dataset.c; syncAreas(); rebuildHandles(); renderList(); areaEdited(); }); });
+    li.querySelector('[data-act="redraw"]').addEventListener("click", function(){ startDrawing(a); });
+    li.querySelector('[data-act="go"]').addEventListener("click", function(){ selectArea(a.id,true); renderList(); });
+    var del=li.querySelector('[data-act="del"]');
+    del.addEventListener("click", function(){
+      if (!del.dataset.armed){ del.dataset.armed="1"; del.textContent="¿Borrar?"; del.classList.add("danger"); setTimeout(function(){ if(del.isConnected){ delete del.dataset.armed; del.textContent="Borrar"; del.classList.remove("danger"); } },3000); return; }
+      STATE.areas=STATE.areas.filter(function(q){ return q!==a; }); if (selectedArea===a.id) selectedArea=null; syncAreas(); rebuildHandles(); renderList(); areaEdited(); });
+    aul.appendChild(li);
+  });
+  sc.appendChild(aul);
+  var addA=document.createElement("div"); addA.className="tools"; addA.innerHTML='<button class="btn" type="button" id="add-area">+ Nueva área</button>'; sc.appendChild(addA);
+  $("add-area").addEventListener("click", function(){ if (drawing) cancelDrawing(); else startDrawing(null); });
+  var ph=document.createElement("p"); ph.className="sec"; ph.textContent="Atracciones"; sc.appendChild(ph);
+  var ol=document.createElement("ol"); ol.id="list";
+  STATE.pins.forEach(function(p,i){
+    var li=document.createElement("li"); li.className="eitem"; li.dataset.id=p.id;
+    li.className="eitem"+(selected===p.id?" on":"");
+    li.innerHTML='<div class="row"><span class="num" style="--c:'+esc(p.color)+'">'+(i+1)+'</span><input type="text" id="n-'+esc(p.id)+'" aria-label="Nombre de la atracción '+(i+1)+'"><button class="btn small ghost" type="button" data-act="del" aria-label="Borrar '+esc(p.name)+'">Borrar</button></div>'+
+     '<textarea id="d-'+esc(p.id)+'" aria-label="Descripción" placeholder="Descripción breve (opcional)"></textarea>'+
+     '<div class="bottom"><div class="sw" role="group" aria-label="Color">'+PALETTE.map(function(c){ return '<button type="button" style="--c:'+c+'" data-c="'+c+'" aria-label="Color '+c+'" aria-pressed="'+(c===p.color)+'"></button>'; }).join("")+'</div><div class="mini"><button class="btn small icon" type="button" data-act="up" aria-label="Subir en la lista"'+(i===0?' disabled':'')+'>↑</button><button class="btn small icon" type="button" data-act="down" aria-label="Bajar en la lista"'+(i===STATE.pins.length-1?' disabled':'')+'>↓</button><button class="btn small" type="button" data-act="go">Ver</button></div></div>';
+    li.querySelector("input").value=p.name||""; li.querySelector("textarea").value=p.desc||"";
+    li.querySelector("input").addEventListener("input", function(e){ p.name=e.target.value; syncPins(); dirty(); });
+    li.querySelector("textarea").addEventListener("input", function(e){ p.desc=e.target.value; dirty(); });
+    li.querySelectorAll(".sw button").forEach(function(b){ b.addEventListener("click", function(){ p.color=b.dataset.c; syncPins(); renderList(); dirty(); }); });
+    var del=li.querySelector('[data-act="del"]');
+    del.addEventListener("click", function(){
+      if (!del.dataset.armed){ del.dataset.armed="1"; del.textContent="¿Borrar?"; del.classList.add("danger"); setTimeout(function(){ if(del.isConnected){ delete del.dataset.armed; del.textContent="Borrar"; del.classList.remove("danger"); } },3000); return; }
+      STATE.pins=STATE.pins.filter(function(q){return q!==p;}); if (selected===p.id) selected=null; syncPins(); renderList(); dirty(); });
+    li.querySelector('[data-act="up"]').addEventListener("click", function(){ move(p,-1); });
+    li.querySelector('[data-act="down"]').addEventListener("click", function(){ move(p,1); });
+    li.querySelector("input").addEventListener("focus", function(){ select(p.id,false); });
+    li.querySelector('[data-act="go"]').addEventListener("click", function(){ select(p.id,true); });
+    ol.appendChild(li);
+  });
+  sc.appendChild(ol);
+  var tools=document.createElement("div"); tools.className="tools";
+  tools.innerHTML='<button class="btn" type="button" id="add">+ Agregar atracción</button>'+
+   '<button class="btn primary" type="button" id="save">Guardar para los invitados</button>'+
+   '<button class="btn small ghost" type="button" id="copy">Copiar datos (respaldo)</button>'+
+   '<p class="status" id="status" role="status"></p>';
+  sc.appendChild(tools); sc.scrollTop=keepTop;
+  $("add").addEventListener("click", addPin);
+  $("save").addEventListener("click", save);
+  $("copy").addEventListener("click", copyData);
+  setStatus(isDirty?"Hay cambios sin guardar.":"Editando. Los invitados ven la última versión guardada.");
+}
+var isDirty=false;
+function cleanKeys(k,v){ return (typeof k==="string" && k.slice(0,2)==="__") ? undefined : v; }
+/* borrador local: cada cambio queda en este navegador hasta que se guarda */
+var DRAFT_KEY="lascarretas-mapa-borrador", draftT=null;
+function saveDraft(){ clearTimeout(draftT); draftT=setTimeout(function(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify({t:Date.now(), state:STATE}, cleanKeys)); }catch(_){} }, 250); }
+function clearDraft(){ clearTimeout(draftT); try{ localStorage.removeItem(DRAFT_KEY); }catch(_){} }
+function readDraft(){ try{ var d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null"); return d && d.state ? d : null; }catch(_){ return null; } }
+function dirty(){ isDirty=true; STATE.examples=false; setStatus("Hay cambios sin guardar."); saveDraft(); }
+function setStatus(t){ var s=$("status"); if (s) s.textContent=t; }
+function move(p, d){ var i=STATE.pins.indexOf(p), j=i+d; if (j<0||j>=STATE.pins.length) return; STATE.pins.splice(i,1); STATE.pins.splice(j,0,p); syncPins(); renderList(); dirty(); }
+var placing=false;
+function bar(text, buttons){
+  var pb=$("placebar"); if (!text){ pb.hidden=true; return; }
+  pb.hidden=false; $("pb-text").textContent=text; var bb=$("pb-btns"); bb.innerHTML="";
+  (buttons||[]).forEach(function(b){ var el=document.createElement("button"); el.type="button"; el.className="btn small"+(b.p?" primary":""); el.textContent=b.t; if (b.dis) el.disabled=true; el.addEventListener("click", b.f); bb.appendChild(el); });
+}
+function setPlacing(on){
+  placing=on; document.body.classList.toggle("placing",on||!!drawing);
+  if (on) bar("Tocá el mapa donde va la nueva atracción", [{t:"Cancelar", p:1, f:function(){ setPlacing(false); setStatus(""); }}]); else if (!drawing) bar(null);
+  var a=$("add"); if (a) a.textContent = on ? "Cancelar" : "+ Agregar atracción";
+  if (on) setStatus("Tocá el mapa en el lugar de la nueva atracción.");
+}
+function addPin(){ setPlacing(!placing); }
+function placeAt(x,z){
+  var id="p"+Date.now().toString(36);
+  var p={id:id, name:"Nueva atracción", desc:"", color:PALETTE[STATE.pins.length%PALETTE.length], x:Math.round(x*2)/2, z:Math.round(z*2)/2};
+  STATE.pins.push(p); selected=id; setPlacing(false); syncPins(); renderList(); dirty();
+  var inp=$("n-"+id); if (inp){ inp.scrollIntoView({block:"nearest"}); inp.focus(); inp.select(); }
+  setStatus("Listo. Escribí el nombre; si hace falta, arrastrá el globo para ajustarlo.");
+}
+/* modo edición dentro de la página */
+var SAVED = JSON.stringify(STATE, cleanKeys), exitArmed=false;
+function setEdit(on){
+  EDIT=on; document.body.classList.toggle("edit",on); if (drawing) cancelDrawing(); setPlacing(false); exitArmed=false; if (!on) selectedArea=null; syncAreas(); rebuildHandles();
+  var b=$("edit-btn"); b.hidden = !(on||CAN_EDIT); b.textContent = on ? "Salir de edición" : "Editar mapa";
+  if (on && $("panel").classList.contains("closed")) $("toggle").click();
+  $("scroll").scrollTop=0;
+  renderList(); resize();
+}
+var CAN_EDIT=false;
+$("edit-btn").addEventListener("click", function(){
+  if (!EDIT){ setEdit(true); return; }
+  if (isDirty && !exitArmed){ exitArmed=true; setStatus("Tenés cambios sin guardar. Tocá «Salir de edición» otra vez para descartarlos, o guardá primero."); return; }
+  if (isDirty){ STATE=JSON.parse(SAVED); isDirty=false; selected=null; selectedArea=null; clearDraft(); renderHeader(); syncPins(); syncAreas(); }
+  setEdit(false);
+});
+function detectOwner(tries){
+  if (!(window.claude && typeof window.claude.use==="function")){ if ((tries||0)<20) setTimeout(function(){ detectOwner((tries||0)+1); },500); return; }
+  window.claude.use("user").then(function(u){
+    if (!u) return;
+    var f = u.isOwner ? u.isOwner() : false, g = u.canEdit ? u.canEdit() : false;
+    return Promise.all([f,g]).then(function(r){ if (r[0]||r[1]){ CAN_EDIT=true; $("edit-btn").hidden=false; } });
+  }).catch(function(){});
+}
+function buildDoc(){
+  var css=document.getElementById("css").textContent, app=document.getElementById("app").textContent;
+  var json=JSON.stringify(STATE,cleanKeys,1).replace(/</g,"\\u003c");
+  var S="<"+"script", E="<"+"/script>";
+  return "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>"+PAGE_TITLE+"</title>\n"+
+   "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\""+FONT_URL+"\" rel=\"stylesheet\">\n"+
+   "<style id=\"css\">"+css+"</style>\n"+S+" src=\""+THREE_URL+"\">"+E+"\n"+S+" src=\""+ORBIT_URL+"\">"+E+"\n</head>\n<body>\n"+
+   S+" id=\"state\" type=\"application/json\">"+json+E+"\n"+S+" id=\"app\">"+app+E+"\n</body>\n</html>\n";
+}
+var artifactP=null;
+function getArtifact(){
+  if (!artifactP){ artifactP = (window.claude && typeof window.claude.use==="function") ? window.claude.use("artifact").catch(function(){return null;}) : Promise.resolve(null); }
+  return artifactP;
+}
+function save(){
+  setStatus("Guardando…");
+  getArtifact().then(function(a){
+    if (!a){ setStatus("Desde acá no se puede guardar. Abrí el mapa en claude.ai (con #editar al final del link) o usá «Copiar datos»."); artifactP=null; return; }
+    return a.publish(buildDoc()).then(function(){ isDirty=false; SAVED=JSON.stringify(STATE,cleanKeys); clearDraft(); setStatus("Guardado. Los invitados ya ven esta versión."); }, function(err){
+      var code=(err&&(err.code||err.name||err.message))||"";
+      if (/conflict/i.test(code)){ saveDraft(); setStatus("Había una versión más nueva del mapa y la página se va a recargar. Tus cambios quedan a salvo: al recargar te ofrezco recuperarlos."); }
+      else if (/not_writer|not_granted/i.test(code)) setStatus("Solo el organizador puede guardar cambios.");
+      else setStatus("No se pudo guardar ("+code+"). Probá de nuevo o usá «Copiar datos».");
+    });
+  });
+}
+function copyData(){
+  var txt=JSON.stringify(STATE,cleanKeys,1);
+  if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ setStatus("Datos copiados. Pegalos en el chat si querés que los fije en el mapa."); }, function(){ setStatus("El navegador no dejó copiar."); }); }
+  else setStatus("El navegador no dejó copiar.");
+}
+
+/* ---------- selección y cámara ---------- */
+function select(id, fly){
+  selected=id; syncPins();
+  document.querySelectorAll(".item").forEach(function(b){ b.classList.toggle("on", b.dataset.id===id); });
+  document.querySelectorAll(".eitem").forEach(function(b){ var on=b.dataset.id===id; b.classList.toggle("on",on); if (on && EDIT && !b.contains(document.activeElement)) b.scrollIntoView({block:"nearest", behavior: REDUCED?"auto":"smooth"}); });
+  var p=STATE.pins.filter(function(q){return q.id===id;})[0];
+  if (p && fly){ var dir=camera.position.clone().sub(controls.target); var dist=Math.min(dir.length(), 95); dir.setLength(Math.max(dist,60)); flyTo(new THREE.Vector3(p.x,0,p.z), new THREE.Vector3(p.x,0,p.z).add(dir)); }
+}
+var anim=null;
+function flyTo(target, pos, ms){
+  ms = REDUCED ? 0 : (ms||900);
+  anim={t0:performance.now(), ms:ms, ft:controls.target.clone(), fp:camera.position.clone(), tt:target, tp:pos};
+}
+function view(kind){
+  document.querySelectorAll(".views button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.view===kind)); });
+  if (kind==="top"){ controls.minPolarAngle=0; flyTo(new THREE.Vector3(12,0,-18), new THREE.Vector3(12,300,-17.9)); }
+  else flyTo(new THREE.Vector3(6,0,-30), new THREE.Vector3(-100,112,88));
+}
+document.querySelectorAll(".views button").forEach(function(b){ b.addEventListener("click", function(){ view(b.dataset.view); }); });
+$("compass").addEventListener("click", function(){ var t=controls.target, d=camera.position.clone().sub(t); var hz=Math.hypot(d.x,d.z); flyTo(t.clone(), new THREE.Vector3(t.x, camera.position.y, t.z+hz)); });
+$("toggle").addEventListener("click", function(){ var c=$("panel").classList.toggle("closed"); this.textContent=c?"Ver lista":"Ocultar"; this.setAttribute("aria-expanded", String(!c)); resize(); });
+
+/* colocar un globo tocando el mapa */
+var downXY=null;
+renderer.domElement.addEventListener("pointerdown", function(e){ downXY=[e.clientX,e.clientY]; });
+renderer.domElement.addEventListener("pointerup", function(e){
+  if ((!placing && !drawing) || !downXY) return;
+  if (Math.hypot(e.clientX-downXY[0], e.clientY-downXY[1]) > 6) return;
+  var r=renderer.domElement.getBoundingClientRect();
+  var m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(m, camera);
+  if (ray.ray.intersectPlane(plane, hit)){ if (drawing) addDrawPoint(hit.x, hit.z); else placeAt(hit.x, hit.z); }
+});
+addEventListener("keydown", function(e){ if (e.key!=="Escape") return; if (drawing) cancelDrawing(); else if (placing){ setPlacing(false); setStatus(""); } });
+
+/* ---------- arrastre de globos (modo edición) ---------- */
+var dragging=null, dragMoved=false, ray=new THREE.Raycaster(), plane=new THREE.Plane(new THREE.Vector3(0,1,0),0), hit=new THREE.Vector3();
+function onPinDown(e,p){
+  dragMoved=false;
+  if (!EDIT) return;
+  dragging=p; controls.enabled=false; pinObjs[p.id].el.classList.add("drag"); e.preventDefault();
+  try{ pinObjs[p.id].el.setPointerCapture(e.pointerId); }catch(_){}
+}
+addEventListener("pointermove", function(e){
+  if (dragV){
+    var r0=renderer.domElement.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((e.clientX-r0.left)/r0.width)*2-1, -((e.clientY-r0.top)/r0.height)*2+1), camera);
+    if (ray.ray.intersectPlane(plane, hit)){
+      var pt=[Math.round(hit.x*2)/2, Math.round(hit.z*2)/2];
+      if (dragV.mid){ dragV.a.points.splice(dragV.idx+1,0,pt); dragV.idx+=1; dragV.mid=false; dragV.el.classList.remove("mid"); }
+      else dragV.a.points[dragV.idx]=pt;
+      dragMoved=true; syncAreas();
+    }
+    return;
+  }
+  if (!dragging) return;
+  var r=renderer.domElement.getBoundingClientRect();
+  var m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(m, camera);
+  if (ray.ray.intersectPlane(plane, hit)){ dragging.x=Math.round(hit.x*2)/2; dragging.z=Math.round(hit.z*2)/2; dragMoved=true; syncPins(); }
+});
+addEventListener("pointerup", function(){
+  if (dragV){ dragV=null; controls.enabled=true; if (dragMoved){ areaEdited(); rebuildHandles(); } return; }
+  if (!dragging) return;
+  var p=dragging; pinObjs[p.id] && pinObjs[p.id].el.classList.remove("drag");
+  dragging=null; controls.enabled=true;
+  if (dragMoved){ dirty(); select(p.id,false); setTimeout(function(){ dragMoved=false; },0); }
+});
+
+/* ---------- loop ---------- */
+var panelOffset={x:0,y:0};
+function resize(){
+  W=innerWidth; H=innerHeight; renderer.setSize(W,H); camera.aspect=W/H;
+  var pn=$("panel").getBoundingClientRect();
+  if (W>720){ panelOffset={x:-(pn.width+16)/2, y:0}; } else { panelOffset={x:0, y:Math.round(pn.height/2)}; }
+  camera.setViewOffset(W,H,panelOffset.x,panelOffset.y,W,H);
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize);
+var tmp=new THREE.Vector3(), tmp2=new THREE.Vector3();
+function project(v, el){
+  tmp.copy(v).project(camera);
+  if (tmp.z>1 || tmp.z<-1){ el.style.visibility="hidden"; return; }
+  var x=(tmp.x+1)/2*W, y=(1-tmp.y)/2*H;
+  el.style.visibility="visible"; return [x,y];
+}
+var compassSvg=$("compass").querySelector("svg"), frameN=0, tmp3=new THREE.Vector3();
+function placeAreaLabels(pinScr){
+  /* elige, entre los puntos candidatos del área, el que en pantalla queda más lejos de los globos */
+  STATE.areas.forEach(function(a){
+    var o=areaObjs[a.id]; if (!o || !a.__cands || o.el.hidden) return;
+    var hw=(o.el.offsetWidth||110)/2, best=null, bs=-1e9, cur=-1e9;
+    a.__cands.forEach(function(c, i){
+      tmp3.set(c[0],1.2,c[1]).project(camera); if (tmp3.z>1||tmp3.z<-1) return;
+      var x=(tmp3.x+1)/2*W, y=(1-tmp3.y)/2*H, dmin=1e9;
+      pinScr.forEach(function(q){ var dx=Math.max(0,Math.abs(x-q[0])-hw-q[2]), dy=Math.max(0,Math.abs(y-q[1])-26); dmin=Math.min(dmin, Math.hypot(dx,dy)); });
+      var sc=Math.min(dmin,60)*2 + c[2];
+      if (o.v.x===c[0] && o.v.z===c[1]) cur=sc;
+      if (sc>bs){ bs=sc; best=c; }
+    });
+    if (best && bs>cur+6) o.v.set(best[0],1.2,best[1]);
+  });
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  if (anim){
+    var k = anim.ms ? Math.min(1,(now-anim.t0)/anim.ms) : 1; var e = k<.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+    controls.target.lerpVectors(anim.ft, anim.tt, e); camera.position.lerpVectors(anim.fp, anim.tp, e);
+    if (k>=1){ anim=null; if (document.querySelector('.views button[data-view="3d"]').getAttribute("aria-pressed")==="true") controls.minPolarAngle=0; }
+  }
+  controls.update();
+  places.forEach(function(pl){ var s=project(pl.v, pl.el); if (s) pl.el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px) translate(-50%,-50%)"; });
+  var pinScr=[];
+  STATE.pins.forEach(function(p){ var o=pinObjs[p.id]; if(!o) return; o.v.set(p.x,12.2,p.z); var s=project(o.v,o.el); if (s){ o.el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px) translate(-14px,-100%)"; o.el.style.zIndex=String(1000-Math.round(tmp.z*1000)); pinScr.push([s[0]+(o.el.offsetWidth||90)/2-14, s[1]-14, (o.el.offsetWidth||90)/2]); } });
+  if ((frameN++ % 10)===0) placeAreaLabels(pinScr);
+  STATE.areas.forEach(function(a){ var o=areaObjs[a.id]; if (!o || o.el.hidden) return; var s=project(o.v,o.el); if (s) o.el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px) translate(-50%,-50%)"; });
+  handles.forEach(function(h){ var q=handlePos(h); if (!q) return; tmp2.set(q[0],.3,q[1]); var s=project(tmp2,h.el); if (s) h.el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px)"; });
+  compassSvg.style.transform="rotate("+controls.getAzimuthalAngle()+"rad)";
+  renderer.render(scene,camera);
+}
+renderHeader(); syncPins(); syncAreas(); setEdit(false);
+(function offerRecovery(){ return;
+  var d=readDraft(); if (!d) return;
+  if (JSON.stringify(d.state, cleanKeys)===SAVED){ clearDraft(); return; }
+  var when=new Date(d.t), hh=("0"+when.getHours()).slice(-2)+":"+("0"+when.getMinutes()).slice(-2);
+  bar("Tenés cambios sin guardar de las "+hh+".", [
+    {t:"Recuperar", p:1, f:function(){ STATE=d.state; if (!STATE.areas) STATE.areas=[]; selected=null; selectedArea=null; renderHeader(); syncPins(); syncAreas(); bar(null); setEdit(true); isDirty=true; setStatus("Recuperé tus cambios. Tocá «Guardar para los invitados» para que queden."); }},
+    {t:"Descartar", f:function(){ clearDraft(); bar(null); }}
+  ]);
+})();
+$("loading").remove();
+requestAnimationFrame(frame);
+window.__ready = true;
+})();
+</script>
+</body>
+</html>
