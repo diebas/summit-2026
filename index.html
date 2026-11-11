@@ -112,16 +112,36 @@ input:focus,textarea:focus{outline:2px solid var(--ochre);outline-offset:0;borde
 #hint{position:fixed;right:16px;bottom:16px;padding:7px 11px;border-radius:8px;background:rgba(255,253,247,.9);color:#3a463f;font-size:12.5px;box-shadow:0 2px 8px rgba(20,30,25,.18);z-index:4}
 #loading{position:fixed;inset:0;display:grid;place-items:center;color:#24352d;font:600 15px var(--body);pointer-events:none}
 
+#selcard{display:none}
+button,.pin,.zone{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 @media (max-width:720px){
-  #panel{left:0;right:0;top:auto;bottom:0;width:auto;height:40%;border-radius:16px 16px 0 0}
+  #panel{left:0;right:0;top:auto;bottom:0;width:auto;height:58%;border-radius:18px 18px 0 0;padding-bottom:env(safe-area-inset-bottom)}
   #panel.closed{height:auto}
-  #panel.closed #scroll,#panel.closed .foot{display:none}
-  #panel header{padding:14px 18px 10px}
-  #placebar{top:auto;bottom:calc(40% + 12px);font-size:13px}
-  h1{font-size:21px}
-  .btn.toggle{display:inline-flex}
+  #panel.closed #scroll,#panel .foot{display:none}
+  #panel header{padding:12px 16px 10px;flex-direction:row;align-items:center}
+  #panel header .eyebrow{display:none}
+  .sub{display:none}
+  h1{font-size:19px}
+  .btn.toggle{display:inline-flex;padding:10px 14px;font-size:14px}
+  #placebar{top:auto;bottom:calc(58% + 12px);font-size:13px;max-width:calc(100% - 24px);white-space:normal}
   #hint{display:none}
-  #hud{right:12px;top:12px}
+  #hud{right:10px;top:10px;flex-direction:row-reverse;align-items:center;gap:8px}
+  #compass{width:40px;height:40px}
+  .views button{padding:10px 12px}
+  #panel.closed #selcard:not([hidden]){display:grid}
+  #selcard{grid-template-columns:30px 1fr auto;gap:10px;align-items:start;margin:0 12px 12px;padding:12px;border-radius:12px;background:var(--forest-2)}
+  #selcard strong{display:block;font:600 16px/1.25 var(--body)}
+  #selcard .d{display:block;color:var(--mist);font-size:14px;margin-top:2px}
+  #selcard .x{border:0;background:transparent;color:var(--mist);font:600 22px/1 var(--body);padding:0 4px;cursor:pointer}
+  .item{padding:12px 10px}
+  .place{font-size:9.5px;letter-spacing:.07em}
+  .zone{font-size:10px;padding:4px 8px}
+  .pin{font-size:12.5px}
+  .compact .pin{padding:3px}
+  .compact .pin span{display:none}
+  .compact .pin.on{padding:3px 10px 3px 3px}
+  .compact .pin.on span{display:inline}
+  .compact .place.minor{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -337,6 +357,7 @@ document.body.insertAdjacentHTML("afterbegin",
  '<aside id="panel" aria-label="Atracciones del evento">'+
  ' <header><div><p class="eyebrow">Mapa del evento</p><h1 id="ev-title"></h1><p class="sub" id="ev-sub"></p></div>'+
  ' <div class="hbtns"><button class="btn small" type="button" id="edit-btn" hidden>Editar mapa</button><button class="btn small toggle" type="button" id="toggle" aria-expanded="true">Ocultar</button></div></header>'+
+ ' <div id="selcard" hidden role="status" aria-live="polite"></div>'+
  ' <div id="scroll"></div>'+
  ' <p class="foot">Establecimiento Las Carretas · Ruta 36, Melilla<br>Modelo aproximado, hecho a partir de la vista satelital y fotos del lugar.</p>'+
  '</aside>'+
@@ -388,7 +409,8 @@ function fieldPoly(m){ var c=Math.cos(FIELD.rot), s=Math.sin(FIELD.rot), L=FIELD
 /* ---------- three ---------- */
 var W = innerWidth, H = innerHeight;
 var renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
+var MOBILE = innerWidth<=720 || (window.matchMedia && matchMedia("(pointer: coarse)").matches && Math.min(innerWidth,innerHeight)<=820);
+renderer.setPixelRatio(Math.min(devicePixelRatio||1, MOBILE?1.5:2));
 renderer.setSize(W, H);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -402,18 +424,22 @@ scene.fog = new THREE.Fog(SKY, 330, 720);
 var camera = new THREE.PerspectiveCamera(38, W/H, 1, 2000);
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.minDistance = 25; controls.maxDistance = 480;
+controls.minDistance = 25; controls.maxDistance = 520;
 controls.maxPolarAngle = 1.38;
 controls.screenSpacePanning = false;
-controls.target.set(6,0,-30);
-camera.position.set(-100,112,88);
+/* vistas iniciales: en celular, desde el sur y más alto para que entre todo el predio en pantalla vertical */
+var HOME = MOBILE ? {t:[14,0,-30], p:[4,270,160]} : {t:[6,0,-30], p:[-100,112,88]};
+var TOP  = MOBILE ? {t:[16,0,-26], p:[16,440,-25.9]} : {t:[12,0,-18], p:[12,300,-17.9]};
+controls.target.set(HOME.t[0],HOME.t[1],HOME.t[2]);
+camera.position.set(HOME.p[0],HOME.p[1],HOME.p[2]);
+if (MOBILE && THREE.TOUCH){ controls.touches = {ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE}; controls.panSpeed=1.1; }
 
 scene.add(new THREE.HemisphereLight(0xe6f1f7, 0x56663a, 0.62));
 var sun = new THREE.DirectionalLight(0xfff1d6, 0.9);
 sun.position.set(-70,150,-110); /* sol del norte: hemisferio sur */
 sun.target.position.set(15,0,-10);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048,2048);
+sun.shadow.mapSize.set(MOBILE?1024:2048, MOBILE?1024:2048);
 var sc = sun.shadow.camera; sc.left=-170; sc.right=170; sc.top=170; sc.bottom=-170; sc.near=10; sc.far=450;
 sun.shadow.bias = -0.0006;
 scene.add(sun); scene.add(sun.target);
@@ -832,12 +858,12 @@ var places = [
   {t:"Laguito", p:[7,1.5,-60], c:"water"},
   {t:"Estacionamiento", p:[-23,1,-11]},
   {t:"Salón principal", p:[3,7.5,-12.5]},
-  {t:"Piscina", p:[5.6,1.2,1.8]},
+  {t:"Piscina", p:[5.6,1.2,1.8], c:"minor"},
   {t:"Entrada", p:[-38.6,5.4,-23]},
-  {t:"Ruta 36", p:[-42,1,-165], c:"road"},
-  {t:"Ruta 36 · hacia Montevideo", p:[-8,1,172], c:"road"},
+  {t:"Ruta 36", p:[-42,1,-165], c:"road minor"},
+  {t:"Ruta 36 · hacia Montevideo", p:[-8,1,172], c:"road minor"},
   {t:"Arroyo Las Piedras", p:[30,7,48], c:"water"},
-  {t:"Frutales", p:[125,3,-70]}
+  {t:"Frutales", p:[125,3,-70], c:"minor"}
 ];
 places.forEach(function(pl){ var d=document.createElement("div"); d.className="place "+(pl.c||""); d.textContent=pl.t; labelsEl.appendChild(d); pl.el=d; pl.v=new THREE.Vector3(pl.p[0],pl.p[1],pl.p[2]); });
 
@@ -945,7 +971,9 @@ function selectArea(id, fly){
   selectedArea=id; syncAreas(); rebuildHandles();
   document.querySelectorAll(".aedit").forEach(function(b){ var on=b.dataset.aid===id; b.classList.toggle("on",on); if (on && !b.contains(document.activeElement)) b.scrollIntoView({block:"nearest", behavior: REDUCED?"auto":"smooth"}); });
   document.querySelectorAll(".aitem").forEach(function(b){ b.classList.toggle("on", b.dataset.aid===id); });
-  var a=areaById(id); if (!a || !fly) return;
+  var a=areaById(id);
+  if (a && MOBILE && !EDIT){ setSheet(false); showCard(cardForArea(a)); }
+  if (!a || !fly) return;
   var c=centroid(a.points), r=0; a.points.forEach(function(p){ r=Math.max(r, Math.hypot(p[0]-c[0],p[1]-c[1])); });
   var dir=camera.position.clone().sub(controls.target); dir.setLength(Math.max(70, r*2.6));
   flyTo(new THREE.Vector3(c[0],0,c[1]), new THREE.Vector3(c[0],0,c[1]).add(dir));
@@ -1186,7 +1214,8 @@ function select(id, fly){
   document.querySelectorAll(".item").forEach(function(b){ b.classList.toggle("on", b.dataset.id===id); });
   document.querySelectorAll(".eitem").forEach(function(b){ var on=b.dataset.id===id; b.classList.toggle("on",on); if (on && EDIT && !b.contains(document.activeElement)) b.scrollIntoView({block:"nearest", behavior: REDUCED?"auto":"smooth"}); });
   var p=STATE.pins.filter(function(q){return q.id===id;})[0];
-  if (p && fly){ var dir=camera.position.clone().sub(controls.target); var dist=Math.min(dir.length(), 95); dir.setLength(Math.max(dist,60)); flyTo(new THREE.Vector3(p.x,0,p.z), new THREE.Vector3(p.x,0,p.z).add(dir)); }
+  if (p && MOBILE && !EDIT){ setSheet(false); showCard(cardForPin(p)); }
+  if (p && fly){ var dir=camera.position.clone().sub(controls.target); var dist=Math.min(dir.length(), MOBILE?120:95); dir.setLength(Math.max(dist,MOBILE?115:60)); flyTo(new THREE.Vector3(p.x,0,p.z), new THREE.Vector3(p.x,0,p.z).add(dir)); }
 }
 var anim=null;
 function flyTo(target, pos, ms){
@@ -1195,12 +1224,30 @@ function flyTo(target, pos, ms){
 }
 function view(kind){
   document.querySelectorAll(".views button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.view===kind)); });
-  if (kind==="top"){ controls.minPolarAngle=0; flyTo(new THREE.Vector3(12,0,-18), new THREE.Vector3(12,300,-17.9)); }
-  else flyTo(new THREE.Vector3(6,0,-30), new THREE.Vector3(-100,112,88));
+  var v = kind==="top" ? TOP : HOME;
+  controls.minPolarAngle=0; flyTo(new THREE.Vector3(v.t[0],v.t[1],v.t[2]), new THREE.Vector3(v.p[0],v.p[1],v.p[2]));
 }
 document.querySelectorAll(".views button").forEach(function(b){ b.addEventListener("click", function(){ view(b.dataset.view); }); });
 $("compass").addEventListener("click", function(){ var t=controls.target, d=camera.position.clone().sub(t); var hz=Math.hypot(d.x,d.z); flyTo(t.clone(), new THREE.Vector3(t.x, camera.position.y, t.z+hz)); });
-$("toggle").addEventListener("click", function(){ var c=$("panel").classList.toggle("closed"); this.textContent=c?"Ver lista":"Ocultar"; this.setAttribute("aria-expanded", String(!c)); resize(); });
+function setSheet(open){
+  var pn=$("panel"); pn.classList.toggle("closed", !open);
+  var t=$("toggle"); t.textContent = open ? "Ocultar" : (MOBILE ? "Ver atracciones" : "Ver lista"); t.setAttribute("aria-expanded", String(open)); resize();
+}
+$("toggle").addEventListener("click", function(){ setSheet($("panel").classList.contains("closed")); });
+function showCard(html){
+  var c=$("selcard"); if (!html){ c.hidden=true; c.innerHTML=""; resize(); return; }
+  c.innerHTML=html+'<button class="x" type="button" aria-label="Cerrar">×</button>'; c.hidden=false;
+  c.querySelector(".x").addEventListener("click", function(){ selected=null; selectedArea=null; syncPins(); syncAreas(); showCard(null); });
+  resize();
+}
+function cardForPin(p){
+  var i=STATE.pins.indexOf(p), inArea=STATE.areas.filter(function(a){ return a.points.length>=3 && inPoly(p.x,p.z,a.points); })[0];
+  return '<span class="num" style="--c:'+esc(p.color)+'">'+(i+1)+'</span><span><strong>'+esc(p.name||"Sin nombre")+'</strong>'+(p.desc?'<span class="d">'+esc(p.desc)+'</span>':'')+(inArea?'<span class="d">'+esc(inArea.name)+'</span>':'')+'</span>';
+}
+function cardForArea(a){
+  var inc=pinsIn(a).map(function(p){ return p.name; }).filter(Boolean);
+  return '<span class="sq" style="--c:'+esc(a.color)+'"></span><span><strong>'+esc(a.name||"Área")+'</strong>'+(inc.length?'<span class="d">'+esc(inc.join(" · "))+'</span>':'')+'</span>';
+}
 
 /* colocar un globo tocando el mapa */
 var downXY=null;
@@ -1259,7 +1306,7 @@ function resize(){
   camera.updateProjectionMatrix();
 }
 addEventListener("resize", resize);
-var tmp=new THREE.Vector3(), tmp2=new THREE.Vector3();
+var tmp=new THREE.Vector3(), tmp2=new THREE.Vector3(), compactOn=false;
 function project(v, el){
   tmp.copy(v).project(camera);
   if (tmp.z>1 || tmp.z<-1){ el.style.visibility="hidden"; return; }
@@ -1291,6 +1338,11 @@ function frame(now){
     if (k>=1){ anim=null; if (document.querySelector('.views button[data-view="3d"]').getAttribute("aria-pressed")==="true") controls.minPolarAngle=0; }
   }
   controls.update();
+  /* no dejar que el mapa se vaya del predio al arrastrar */
+  var tx=Math.max(-110,Math.min(150,controls.target.x)), tz=Math.max(-170,Math.min(130,controls.target.z));
+  if (tx!==controls.target.x || tz!==controls.target.z){ camera.position.x+=tx-controls.target.x; camera.position.z+=tz-controls.target.z; controls.target.x=tx; controls.target.z=tz; }
+  var cmp = W<=720 && camera.position.distanceTo(controls.target)>150;
+  if (cmp!==compactOn){ compactOn=cmp; document.body.classList.toggle("compact", cmp); }
   places.forEach(function(pl){ var s=project(pl.v, pl.el); if (s) pl.el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px) translate(-50%,-50%)"; });
   var pinScr=[];
   STATE.pins.forEach(function(p){ var o=pinObjs[p.id]; if(!o) return; o.v.set(p.x,12.2,p.z); var s=project(o.v,o.el); if (s){ o.el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px) translate(-14px,-100%)"; o.el.style.zIndex=String(1000-Math.round(tmp.z*1000)); pinScr.push([s[0]+(o.el.offsetWidth||90)/2-14, s[1]-14, (o.el.offsetWidth||90)/2]); } });
@@ -1301,6 +1353,7 @@ function frame(now){
   renderer.render(scene,camera);
 }
 renderHeader(); syncPins(); syncAreas(); setEdit(false);
+if (MOBILE && !EDIT) setSheet(false);
 (function offerRecovery(){ return;
   var d=readDraft(); if (!d) return;
   if (JSON.stringify(d.state, cleanKeys)===SAVED){ clearDraft(); return; }
