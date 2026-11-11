@@ -1160,6 +1160,85 @@ function sambaRide(){
   return g;
 }
 PROP_BUILD.samba=function(){ var outer=new THREE.Group(), r=sambaRide(); r.position.set(-3,0,-3.5); r.rotation.y=-Math.PI/2; outer.add(r); outer.userData.anim=r.userData.anim; return outer; };
+/* ---------- vida en el predio: gente, autos, pájaros, perro ---------- */
+var LIFE=[];
+(function(){
+  var rnd=rng(2026), SHIRTS=[0xd9482b,0x2f7fbf,0xf2c230,0x2f9e6b,0x7b4fb5,0xe07a1f,0xc2357a,0xf2efe6,0x3b4a54,0x8fd0e8,0xf28fb0];
+  var PANTS=[0x2f3a4a,0x4a3a2a,0x1e1e24,0x6a7a8a,0xd8cdb5], SKIN=[0xd9a77c,0xb07a52,0xe8c39e,0x8a5a3a];
+  function pick(a){ return a[Math.floor(rnd()*a.length)]; }
+  function mkPerson(){ var p=person(pick(SHIRTS), pick(PANTS), pick(SKIN)); p.userData.arm(1,0,.08); p.userData.arm(-1,0,-.08); return p; }
+  function loop(pts){ var L=[0]; for (var i=1;i<=pts.length;i++){ var a=pts[i-1], b=pts[i%pts.length]; L.push(L[i-1]+Math.hypot(b[0]-a[0],b[1]-a[1])); } return {pts:pts, L:L, len:L[L.length-1]}; }
+  function at(r, d){ d=((d%r.len)+r.len)%r.len; for (var i=1;i<r.L.length;i++){ if (d<=r.L[i]){ var a=r.pts[i-1], b=r.pts[i%r.pts.length], k=(d-r.L[i-1])/(r.L[i]-r.L[i-1]); return [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, Math.atan2(b[0]-a[0], b[1]-a[1])]; } } return [r.pts[0][0],r.pts[0][1],0]; }
+
+  // paseantes
+  var routes=[
+    [[-24,14],[-24,-20],[-33,-23],[-24,-26],[-19,-4]],                       // explanada y entrada
+    [[-6,-30],[4,-44],[18,-58],[34,-74],[44,-80],[30,-66],[10,-50]],          // jardín → cancha
+    [[20,-20],[44,-20],[45,4],[22,6]],                                         // área gourmet
+    [[28,-28],[47,-34],[60,-44],[56,-60],[46,-48]],                            // hacia Tarot
+    [[-29,-38],[-29,-74],[-21,-90],[-24,-56]],                                 // jardín oeste
+    [[-15,-26],[0,-29],[17,-26],[28,-15],[30,-4],[17,-26]],                    // frente norte de la casona
+    [[30,10],[40,22],[50,30],[44,14]]                                          // hacia Masajes
+  ].map(loop);
+  var walkers=[];
+  routes.forEach(function(r,ri){ var n=(ri===1||ri===5?4:3)-(MOBILE?1:0); for (var i=0;i<n;i++){
+    var p=mkPerson(); scene.add(p);
+    walkers.push({o:p, r:r, d:rnd()*r.len, v:(1.0+rnd()*.6)*(rnd()<.5?1:-1), side:(rnd()-.5)*2.2, ph:rnd()*6});
+    if (rnd()<.35){ var q=mkPerson(); q.scale.multiplyScalar(.7); scene.add(q); walkers.push({o:q, r:r, d:walkers[walkers.length-1].d-1.1, v:walkers[walkers.length-1].v, side:walkers[walkers.length-1].side+.9, ph:rnd()*6}); }   // con un niño
+  }});
+  var last=0;
+  LIFE.push(function(t){
+    var dt=last?Math.min(.1,(t-last)/1000):0; last=t;
+    walkers.forEach(function(w){ w.d+=w.v*dt; var a=at(w.r,w.d), h=a[2]+(w.v<0?Math.PI:0);
+      w.o.position.set(a[0]+Math.cos(h)*w.side, Math.abs(Math.sin(t/180+w.ph))*.06, a[1]-Math.sin(h)*w.side);
+      w.o.rotation.y=h; w.o.rotation.z=Math.sin(t/180+w.ph)*.04; });
+  });
+
+  // grupitos charlando
+  [[-22,-8],[-2,-52],[40,-36],[30,-2],[60,-40],[-8,-26]].forEach(function(c,gi){
+    var n=3+(gi%2), ppl=[];
+    for (var i=0;i<n;i++){ var a=i/n*Math.PI*2+rnd(), p=mkPerson(); p.position.set(c[0]+Math.cos(a)*.75, 0, c[1]+Math.sin(a)*.75); p.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a)); scene.add(p); ppl.push({o:p, y:p.rotation.y, ph:rnd()*6}); }
+    LIFE.push(function(t){ ppl.forEach(function(q){ q.o.rotation.y=q.y+Math.sin(t/900+q.ph)*.25; }); });
+  });
+
+  // autos
+  var CAR_COLS=[0xd9482b,0x2f7fbf,0xf2efe6,0x3b4a54,0x9aa3aa,0x1e1e24,0xf2c230,0x2f9e6b,0x7a1d2a];
+  function car(col){
+    var g=new THREE.Group(), body=lam(col), dark=lam(0x1d1f22), glass=lam(0x6f8da0);
+    var b=new THREE.Mesh(new THREE.BoxGeometry(1.8,.6,4.2), body); b.position.y=.6; g.add(b);
+    var c=new THREE.Mesh(new THREE.BoxGeometry(1.6,.55,2.2), glass); c.position.set(0,1.15,-.2); g.add(c);
+    var r=new THREE.Mesh(new THREE.BoxGeometry(1.62,.08,2.0), body); r.position.set(0,1.45,-.2); g.add(r);
+    [[.85,1.35],[-.85,1.35],[.85,-1.35],[-.85,-1.35]].forEach(function(w){ var m=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.25,10), dark); m.rotation.z=Math.PI/2; m.position.set(w[0],.34,w[1]); g.add(m); });
+    g.traverse(function(o){ if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+    return g;
+  }
+  // estacionados en la explanada (dos filas)
+  [-28.5,-19.5].forEach(function(x,row){ for (var z=-6; z<=20; z+=3.1){ if (rnd()<.18) continue; var c=car(pick(CAR_COLS)); c.position.set(x,0,z); c.rotation.y=(row?-1:1)*Math.PI/2+(rnd()-.5)*.08; scene.add(c); } });
+  // tránsito en la Ruta 36
+  var road=loop(ROAD.filter(function(p,i){ return i%4===0; })); road.closed=false;
+  var roadLen=0, RL=[0]; for (var i=1;i<ROAD.length;i++){ roadLen+=Math.hypot(ROAD[i][0]-ROAD[i-1][0],ROAD[i][1]-ROAD[i-1][1]); RL.push(roadLen); }
+  function onRoad(d, lane){ d=Math.max(0,Math.min(roadLen-.01,d)); var i=1; while (RL[i]<d) i++; var a=ROAD[i-1], b=ROAD[i], k=(d-RL[i-1])/(RL[i]-RL[i-1]), h=Math.atan2(b[0]-a[0], b[1]-a[1]);
+    return [a[0]+(b[0]-a[0])*k + Math.cos(h)*lane, a[1]+(b[1]-a[1])*k - Math.sin(h)*lane, h]; }
+  var traffic=[]; for (var j=0;j<5;j++){ var c=car(pick(CAR_COLS)); scene.add(c); traffic.push({o:c, d:rnd()*roadLen, v:(10+rnd()*6)*(j%2?1:-1), lane:j%2?-1.8:1.8}); }
+  LIFE.push(function(t){ var dt=Math.min(.1,(t-(traffic.last||t))/1000); traffic.last=t;
+    traffic.forEach(function(c){ c.d+=c.v*dt; if (c.d>roadLen) c.d-=roadLen; if (c.d<0) c.d+=roadLen; var a=onRoad(c.d,c.lane); c.o.position.set(a[0],0,a[1]); c.o.rotation.y=a[2]+(c.v<0?Math.PI:0); }); });
+
+  // pájaros
+  var birds=[]; var bm=lam(0x2b2b30);
+  for (var k=0;k<7;k++){ var g=new THREE.Group(), wl=new THREE.Mesh(new THREE.BoxGeometry(.9,.05,.3), bm), wr=wl.clone(); wl.geometry=wl.geometry.clone(); wl.geometry.translate(-.45,0,0); wr.geometry=wr.geometry.clone(); wr.geometry.translate(.45,0,0);
+    var bd=new THREE.Mesh(new THREE.BoxGeometry(.18,.14,.55), bm); g.add(bd); g.add(wl); g.add(wr); scene.add(g);
+    birds.push({g:g, wl:wl, wr:wr, r:45+rnd()*35, h:24+rnd()*12, sp:.10+rnd()*.06, ph:rnd()*6, cx:10+rnd()*20, cz:-30+rnd()*20}); }
+  LIFE.push(function(t){ var s=t/1000; birds.forEach(function(b){ var a=s*b.sp+b.ph; b.g.position.set(b.cx+Math.cos(a)*b.r, b.h+Math.sin(s*.7+b.ph)*2, b.cz+Math.sin(a)*b.r); b.g.rotation.y=-a; var f=Math.sin(s*9+b.ph)*.6; b.wl.rotation.z=f; b.wr.rotation.z=-f; }); });
+
+  // perro corriendo en el jardín
+  var dog=new THREE.Group(), dm=lam(0x9a6a3a), body=new THREE.Mesh(new THREE.BoxGeometry(.32,.32,.8), dm); body.position.y=.5; dog.add(body);
+  var head=new THREE.Mesh(new THREE.BoxGeometry(.26,.26,.3), dm); head.position.set(0,.72,.48); dog.add(head);
+  var tail=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.35), dm); tail.position.set(0,.68,-.5); tail.rotation.x=-.6; dog.add(tail);
+  var legs=[]; [[.11,.28],[-.11,.28],[.11,-.28],[-.11,-.28]].forEach(function(l){ var m=new THREE.Mesh(new THREE.BoxGeometry(.08,.36,.08), dm); m.geometry.translate(0,-.18,0); m.position.set(l[0],.36,l[1]); dog.add(m); legs.push(m); });
+  dog.traverse(function(o){ if (o.isMesh) o.castShadow=true; }); dog.scale.setScalar(1.2); scene.add(dog);
+  LIFE.push(function(t){ var s=t/1000*.55, x=-2+9*Math.sin(s), z=-50+5*Math.sin(2*s), dx=9*Math.cos(s), dz=10*Math.cos(2*s);
+    dog.position.set(x, Math.abs(Math.sin(t/110))*.08, z); dog.rotation.y=Math.atan2(dx,dz); legs.forEach(function(l,i){ l.rotation.x=Math.sin(t/90+(i%2?Math.PI:0)+(i>1?Math.PI/2:0))*.7; }); tail.rotation.y=Math.sin(t/80)*.6; });
+})();
 var propObjs={};
 function syncProps(){
   var seen={};
@@ -1623,6 +1702,7 @@ function frame(now){
     controls.target.lerpVectors(anim.ft, anim.tt, e); camera.position.lerpVectors(anim.fp, anim.tp, e);
     if (k>=1){ anim=null; if (document.querySelector('.views button[data-view="3d"]').getAttribute("aria-pressed")==="true") controls.minPolarAngle=0; }
   }
+  if (!REDUCED) LIFE.forEach(function(f){ f(now); });
   if (!REDUCED) for (var pk in propObjs){ var po=propObjs[pk]; if (po.g.userData.anim) po.g.userData.anim(now); }
   controls.update();
   /* no dejar que el mapa se vaya del predio al arrastrar */
