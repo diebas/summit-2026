@@ -674,6 +674,11 @@ fill([[-120,96],[-40,95],[-60,122],[-140,118]], 5.5, .75, .2);
 
 // árboles quitados a pedido (se ocultan en su lugar para no alterar el resto del bosque)
 var CLEARED = [[41.5,-41.5,7],[59,-54.5,7],[2.5,-48,10]];
+/* escenas modeladas en los pines: el tipo sale del nombre de la atracción */
+function propKind(p){ var n=(p.name||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if (/food ?truck/.test(n)) return "foodtrucks"; if (/arquer|arco/.test(n)) return "arqueria"; if (/burbuja/.test(n)) return "burbuja"; return null; }
+var PROP_CLEAR = {foodtrucks:[[-5,-4,12],[-5,4,9],[3,-2,8]], arqueria:[[-6,5,5],[-6,-4,6],[-6,-13,5]], burbuja:[]};
+STATE.pins.forEach(function(p){ var k=propKind(p); if (k) PROP_CLEAR[k].forEach(function(c){ CLEARED.push([p.x+c[0], p.z+c[1], c[2]]); }); });
 // zona abierta entre el claro y el lugar despejado; quedan solo los árboles contra la cancha y contra el borde este
 var CLEARED_POLYS = [[[47,-69],[64,-69],[67,-60],[65,-45],[50,-41],[46,-52]]];
 trees.forEach(function(t){ CLEARED.forEach(function(c){ if (Math.hypot(t.x-c[0], t.z-c[1]) < c[2]) t.hide=true; }); CLEARED_POLYS.forEach(function(q){ if (inPoly(t.x,t.z,q)) t.hide=true; });
@@ -959,8 +964,120 @@ function makePin(p){
   el.addEventListener("click", function(){ if (!dragMoved) select(p.id, !EDIT); });
   pinObjs[p.id]=obj;
 }
+/* ---------- escenas de las atracciones ---------- */
+function person(shirt, pants, skin){
+  var g=new THREE.Group(), sk=lam(skin||0xd9a77c), pm=lam(pants||0x2f3a4a), sm=lam(shirt);
+  [-.11,.11].forEach(function(x){ var l=new THREE.Mesh(new THREE.CylinderGeometry(.075,.07,.82,6), pm); l.position.set(x,.41,0); g.add(l); });
+  var t=new THREE.Mesh(new THREE.BoxGeometry(.42,.6,.24), sm); t.position.y=1.12; g.add(t);
+  var h=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8), sk); h.position.y=1.58; g.add(h);
+  var hair=new THREE.Mesh(new THREE.SphereGeometry(.135,10,8,0,Math.PI*2,0,Math.PI/2), lam(0x3a2a1e)); hair.position.y=1.6; g.add(hair);
+  g.userData.arm=function(side, rx, rz){ var a=new THREE.Mesh(new THREE.CylinderGeometry(.055,.05,.6,6), sm); a.geometry.translate(0,-.3,0); a.position.set(side*.25,1.38,0); a.rotation.set(rx||0,0,rz||0); g.add(a); return a; };
+  g.traverse(function(o){ if (o.isMesh){ o.castShadow=true; } });
+  g.scale.setScalar(1.15); return g;
+}
+function foodTruck(body, accent, sign){
+  var g=new THREE.Group(), bm=lam(body), am=lam(accent), dark=lam(0x22262a), glass=lam(0x9fc6d6), steel=lam(0xb9bec2);
+  var box=new THREE.Mesh(new THREE.BoxGeometry(5.6,2.5,2.3), bm); box.position.set(-.5,1.75,0); g.add(box);
+  var cab=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.9,2.25), bm); cab.position.set(3.1,1.45,0); g.add(cab);
+  var hood=new THREE.Mesh(new THREE.BoxGeometry(.6,1.0,2.2), bm); hood.position.set(4.2,1.0,0); g.add(hood);
+  var ws=new THREE.Mesh(new THREE.BoxGeometry(.06,.75,1.9), glass); ws.position.set(3.93,1.95,0); ws.rotation.z=-.25; g.add(ws);
+  var stripe=new THREE.Mesh(new THREE.BoxGeometry(5.65,.35,2.32), am); stripe.position.set(-.5,1.0,0); g.add(stripe);
+  var roof=new THREE.Mesh(new THREE.BoxGeometry(5.7,.12,2.4), am); roof.position.set(-.5,3.05,0); g.add(roof);
+  // ventana de atención + mostrador + toldo (lado +z)
+  var win=new THREE.Mesh(new THREE.BoxGeometry(3.2,1.0,.05), dark); win.position.set(-.6,2.05,1.16); g.add(win);
+  var counter=new THREE.Mesh(new THREE.BoxGeometry(3.3,.08,.4), steel); counter.position.set(-.6,1.55,1.35); g.add(counter);
+  var aw=new THREE.Group(); for (var i=0;i<8;i++){ var st=new THREE.Mesh(new THREE.BoxGeometry(.44,.04,1.1), i%2?lam(0xffffff):am); st.position.set(-2.14+i*.44,0,.55); aw.add(st); }
+  aw.position.set(-.6,2.72,1.15); aw.rotation.x=.38; g.add(aw);
+  // cartel en el techo
+  var cv=document.createElement("canvas"); cv.width=256; cv.height=64; var c=cv.getContext("2d");
+  c.fillStyle="#fff8ec"; c.fillRect(0,0,256,64); c.fillStyle="#"+accent.toString(16).padStart(6,"0"); c.font="800 40px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(sign,128,34);
+  var tex=new THREE.CanvasTexture(cv), sm=new THREE.MeshLambertMaterial({map:tex});
+  var signM=new THREE.Mesh(new THREE.BoxGeometry(2.6,.6,.08), [lam(0xfff8ec),lam(0xfff8ec),lam(0xfff8ec),lam(0xfff8ec),sm,sm]); signM.position.set(-.6,3.45,.6); g.add(signM);
+  // ruedas
+  [[-2.4,1],[-2.4,-1],[2.9,1],[2.9,-1]].forEach(function(w){ var m=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.3,14), dark); m.rotation.x=Math.PI/2; m.position.set(w[0],.42,w[1]*1.08); g.add(m); });
+  g.traverse(function(o){ if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+  return g;
+}
+function target(){
+  var g=new THREE.Group(), cv=document.createElement("canvas"); cv.width=cv.height=128; var c=cv.getContext("2d");
+  [["#f2f0ea",64],["#1d1d1d",52],["#2f7fbf",40],["#d9482b",28],["#f2c230",15]].forEach(function(r){ c.beginPath(); c.arc(64,64,r[1],0,Math.PI*2); c.fillStyle=r[0]; c.fill(); });
+  var face=new THREE.Mesh(new THREE.CylinderGeometry(.62,.62,.18,24), [lam(0xc9b48a), new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(cv)}), lam(0xc9b48a)]);
+  face.rotation.x=Math.PI/2; face.position.y=1.25; face.rotation.z=0; g.add(face);
+  var wood=lam(0x7a5a38);
+  [-.45,.45].forEach(function(x){ var l=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.9,5), wood); l.position.set(x,.9,.25); l.rotation.x=-.25; g.add(l); });
+  var back=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.9,5), wood); back.position.set(0,.9,-.35); back.rotation.x=.35; g.add(back);
+  // flechas clavadas
+  [[.12,.1],[-.2,-.15],[.05,-.3]].forEach(function(a){ var f=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.6,4), lam(0xe8e2d0)); f.rotation.x=Math.PI/2; f.position.set(a[0],1.25+a[1],.38); g.add(f); });
+  g.traverse(function(o){ if (o.isMesh) o.castShadow=true; });
+  return g;
+}
+function archer(shirt){
+  var g=person(shirt);
+  g.userData.arm(1, -Math.PI/2, 0);           // brazo del arco, extendido hacia el blanco
+  g.userData.arm(-1, -Math.PI/2+.25, -.15);   // brazo que tensa
+  var bow=new THREE.Mesh(new THREE.TorusGeometry(.62,.025,5,18,Math.PI*.9), lam(0x5a3a22)); bow.rotation.set(0,Math.PI/2,Math.PI/2+Math.PI*.05); bow.position.set(.29,1.38,.62); g.add(bow);
+  var string=new THREE.Mesh(new THREE.BoxGeometry(.01,1.1,.01), lam(0xf0f0f0)); string.position.set(.29,1.38,.42); g.add(string);
+  var arrow=new THREE.Mesh(new THREE.CylinderGeometry(.013,.013,.85,4), lam(0xe8e2d0)); arrow.rotation.x=Math.PI/2; arrow.position.set(.1,1.4,.55); g.add(arrow);
+  return g;
+}
+function bubblePlayer(shirt){
+  var g=person(shirt, 0x1e1e24);
+  g.userData.arm(1,-.5,.25); g.userData.arm(-1,-.5,-.25);
+  var b=new THREE.Mesh(new THREE.SphereGeometry(1.2,20,14), new THREE.MeshPhongMaterial({color:0xeaf6ff, transparent:true, opacity:.32, shininess:120, specular:0xffffff, depthWrite:false}));
+  b.position.y=1.25; b.scale.set(1,.95,1); b.renderOrder=3; g.add(b);
+  var ring=new THREE.Mesh(new THREE.TorusGeometry(1.18,.03,6,28), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.5})); ring.rotation.x=Math.PI/2; ring.position.y=1.25; g.add(ring);
+  return g;
+}
+var PROP_BUILD = {
+  foodtrucks: function(){
+    var outer=new THREE.Group(), g=new THREE.Group(); g.position.set(-5,0,-4); outer.add(g);
+    var a=foodTruck(0xe2b445, 0xd9482b, "BURGERS"); a.position.set(-5.2,0,-1.2); a.rotation.y=.12; g.add(a);
+    var b=foodTruck(0x2f9e6b, 0xf2efe6, "TACOS"); b.position.set(5.4,0,-1.6); b.rotation.y=-.12; g.add(b);
+    // mesas con sombrilla y gente
+    [[-1.8,4.6,0xd9482b],[2.6,5.2,0x2f7fbf]].forEach(function(t){
+      var tb=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.06,16), lam(0xf2efe6)); tb.position.set(t[0],.75,t[1]); g.add(tb);
+      var leg=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.75,6), lam(0x555555)); leg.position.set(t[0],.37,t[1]); g.add(leg);
+      var pole=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,2.3,6), lam(0xdddddd)); pole.position.set(t[0],1.15,t[1]); g.add(pole);
+      var um=new THREE.Mesh(new THREE.ConeGeometry(1.4,.55,8), lam(t[2])); um.position.set(t[0],2.4,t[1]); um.castShadow=true; g.add(um);
+    });
+    [[-3.2,1.9,0x2f7fbf,Math.PI],[-4.3,2.1,0xe07a1f,Math.PI],[4.6,1.7,0x7b4fb5,Math.PI],[-1.0,5.4,0xc2357a,0],[3.4,4.4,0xf2c230,-1]].forEach(function(q){
+      var pp=person(q[2]); pp.position.set(q[0],0,q[1]); pp.rotation.y=q[3]; g.add(pp); });
+    return outer;
+  },
+  arqueria: function(){
+    var g=new THREE.Group();
+    [[-9,0xd9482b],[-6,0x2f7fbf],[-3,0xf2c230]].forEach(function(a,i){
+      var ar=archer(a[1]); ar.position.set(a[0],0,5); ar.rotation.y=Math.PI; g.add(ar);   // miran hacia el norte (−z)
+      var t=target(); t.position.set(a[0],0,-13); g.add(t);
+    });
+    // línea de tiro
+    var line=new THREE.Mesh(new THREE.BoxGeometry(9,.03,.12), new THREE.MeshBasicMaterial({color:0xffffff})); line.position.set(-6,.03,4.3); g.add(line);
+    // espectador
+    var s=person(0x7b4fb5); s.position.set(-11.5,0,7); s.rotation.y=Math.PI*.8; g.add(s);
+    return g;
+  },
+  burbuja: function(){
+    var g=new THREE.Group();
+    [[-7,-2,0xd9482b,1.4],[-3,3,0xd9482b,1.9],[-1,-4,0xd9482b,1.2],[3,1.5,0x2f7fbf,-1.6],[6,-3,0x2f7fbf,-1.3],[1.5,5,0x2f7fbf,-2.2]].forEach(function(q){
+      var b=bubblePlayer(q[2]); b.position.set(q[0],0,q[1]); b.rotation.y=q[3]; g.add(b); });
+    var ball=new THREE.Mesh(new THREE.SphereGeometry(.25,12,10), lam(0xd4e83a)); ball.position.set(1,.25,0); ball.castShadow=true; g.add(ball);
+    return g;
+  }
+};
+var propObjs={};
+function syncProps(){
+  var seen={};
+  STATE.pins.forEach(function(p){
+    var k=propKind(p); if (!k) return; seen[p.id]=1;
+    var o=propObjs[p.id];
+    if (!o || o.k!==k){ if (o) scene.remove(o.g); o=propObjs[p.id]={k:k, g:PROP_BUILD[k]()}; scene.add(o.g); }
+    o.g.position.set(p.x,0,p.z);
+  });
+  Object.keys(propObjs).forEach(function(id){ if (!seen[id]){ scene.remove(propObjs[id].g); delete propObjs[id]; } });
+}
 function syncPins(){
   if (typeof syncAreaLabels==="function") syncAreaLabels();
+  syncProps();
   var seen={};
   STATE.pins.forEach(function(p,i){
     if (!pinObjs[p.id]) makePin(p);
