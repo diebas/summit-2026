@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&family=Unbounded:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style id="css">
 :root{
   /* Mapa a pantalla completa; panel de monte oscuro a la izquierda (abajo en celular); acento ocre de las paredes de la casona */
@@ -225,6 +226,79 @@ body.night #compass svg path:last-child{fill:#5b5680}
 body.night #hint,body.night #loading{background:rgba(16,10,38,.86);color:#cfc8ef;border:1px solid rgba(255,255,255,.15)}
 body.night #loading{background:transparent;border:0}
 body.night input[type=text],body.night textarea{background:#0b0720}
+
+/* ===== Interfaz pixel art (el modelo 3D queda igual) ===== */
+:root{--display:"Press Start 2P",monospace;--body:"Pixelify Sans","Courier New",monospace;--forest:#1b2b34;--forest-2:#2b4250;--paper:#f4f0d8;--mist:#9fb8a8;--ochre:#ffcd3c}
+*{border-radius:0!important}
+body{font-size:16px}
+#panel{background:#1b2b34;backdrop-filter:none;-webkit-backdrop-filter:none;border:4px solid #f4f0d8;box-shadow:0 0 0 4px #0c151a,8px 8px 0 4px rgba(12,21,26,.55)}
+#panel header,.foot{border-color:#3a5666!important;border-width:4px!important;border-style:dashed!important;border-left:0!important;border-right:0!important}
+#panel header{border-top:0!important}.foot{border-bottom:0!important}
+h1{font:400 17px/1.5 var(--display);color:#ffcd3c;text-shadow:3px 3px 0 #0c151a;letter-spacing:0}
+.eyebrow,.sec{font:400 9px/1.4 var(--display);letter-spacing:.06em;color:#7fe0c2}
+.sub{font-size:15px}
+.item strong{font:600 17px/1.2 var(--body)}
+.item span.d,.item .inc{font-size:14px}
+.item:hover,.item.on{background:#2b4250;outline:3px solid #ffcd3c;outline-offset:-3px}
+.num{width:26px;height:26px;border:3px solid #0c151a;box-shadow:inset -3px -3px 0 rgba(0,0,0,.28);font:400 9px/1 var(--display)}
+.sq{border:3px solid #0c151a;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 4px,transparent 4px 8px)}
+.btn{border:3px solid #f4f0d8;background:#2b4250;color:#f4f0d8;font:600 15px/1 var(--body);box-shadow:3px 3px 0 #0c151a}
+.btn:active{transform:translate(3px,3px);box-shadow:none}
+.place{font:400 8px/1.3 var(--display);letter-spacing:0;color:#fff!important;text-shadow:2px 0 0 #0c151a,-2px 0 0 #0c151a,0 2px 0 #0c151a,0 -2px 0 #0c151a,2px 2px 0 #0c151a}
+.place.big{color:#ffcd3c!important;font-size:9px}
+.place.water{color:#8fe9ff!important}
+.pin{background:#f4f0d8;color:#0c151a;border:3px solid #0c151a;box-shadow:3px 3px 0 rgba(12,21,26,.6);font:600 15px/1.1 var(--body);padding:2px 8px 2px 2px}
+.pin::after{display:none}
+.pin b{border:0;width:22px;height:22px;font:400 8px/1 var(--display);box-shadow:inset -3px -3px 0 rgba(0,0,0,.28)}
+.pin.on{box-shadow:0 0 0 3px var(--c),6px 6px 0 rgba(12,21,26,.6)}
+.zone{font:400 8px/1.3 var(--display);letter-spacing:0;border:3px solid #0c151a;box-shadow:3px 3px 0 rgba(12,21,26,.6);background-image:none;padding:5px 8px;text-shadow:1px 1px 0 rgba(0,0,0,.5)}
+.views,#compass,#daynight,#hint{background:#f4f0d8;border:3px solid #0c151a;box-shadow:3px 3px 0 rgba(12,21,26,.6);color:#0c151a}
+.views button{font:600 15px/1 var(--body);color:#0c151a}
+.views button[aria-pressed=true]{background:#0c151a;color:#ffcd3c}
+#daynight{font:600 15px/1 var(--body)}
+#hint{font:400 14px/1.2 var(--body)}
+#selcard{background:#2b4250!important;border:3px solid #f4f0d8}
+#loading{font:400 11px/1.6 var(--display)}
+/* noche */
+body.night #panel{background:#120c26;border-color:#ff4fb3;box-shadow:0 0 0 4px #05030d,8px 8px 0 4px rgba(5,3,13,.6)}
+body.night h1{font:400 17px/1.5 var(--display);background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#ff4fb3;text-shadow:3px 3px 0 #05030d}
+body.night .eyebrow,body.night .sec{text-shadow:none}
+body.night .place{text-shadow:2px 0 0 #05030d,-2px 0 0 #05030d,0 2px 0 #05030d,0 -2px 0 #05030d;font-weight:400}
+body.night .pin{background:#120c26;color:#fff;border:3px solid var(--c);box-shadow:3px 3px 0 #05030d}
+body.night .pin b{box-shadow:inset -3px -3px 0 rgba(0,0,0,.28)}
+body.night .zone{font:400 8px/1.3 var(--display);background:#120c26;border:3px solid var(--c);box-shadow:3px 3px 0 #05030d;text-shadow:none}
+body.night .views,body.night #compass,body.night #daynight,body.night #hint{background:#120c26;border:3px solid #ff4fb3;box-shadow:3px 3px 0 #05030d;color:#f4efff}
+body.night .views button[aria-pressed=true]{background:#ff4fb3;color:#120c26}
+body.night .num,body.night .sq{box-shadow:inset -3px -3px 0 rgba(0,0,0,.28)}
+@media (max-width:720px){ h1{font-size:13px} body.night h1{font-size:13px} .place{font-size:7px} .zone{font-size:7px;padding:4px 6px} .pin{font-size:14px} .btn.toggle{font-size:14px} }
+
+/* elementos agregados después de la prueba */
+.tabs{background:#0c151a;padding:4px;border:3px solid #3a5666}
+.tabs button{font:600 16px/1 var(--body);color:#9fb8a8;padding:9px 8px}
+.tabs button[aria-pressed=true]{background:#ffcd3c;color:#0c151a;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25)}
+.grp .aitem strong{font:400 10px/1.5 var(--display)}
+.glist{border-left-width:4px}
+.item .when{font:600 14px/1.2 var(--body);opacity:1;color:#ffcd3c}
+.tt th{font:600 14px/1.2 var(--body)}
+.tt thead th{border-bottom-width:4px}
+.tt .hr{font:400 9px/1.6 var(--display)}
+.tt thead .hr{font:600 14px/1.2 var(--body)}
+.chip{font:600 14px/1.2 var(--body);border-left-width:4px;box-shadow:inset -2px -2px 0 rgba(0,0,0,.25)}
+.nowline{border-top:3px solid #ff5a4f}
+.nowline span{font:400 8px/1 var(--display);padding:5px 6px;border:2px solid #0c151a;box-shadow:2px 2px 0 rgba(12,21,26,.6)}
+.nowbadge{font:400 7px/1.3 var(--display);letter-spacing:0;padding:3px 5px;border:2px solid #0c151a}
+.pin.live b::after{border:2px solid #0c151a;width:10px;height:10px}
+.place.live{color:#ff5a4f!important}
+#selcard strong{font:600 17px/1.2 var(--body)}
+#selcard .d{font-size:15px}
+#placebar{font:600 15px/1.2 var(--body);border:3px solid #f4f0d8;box-shadow:4px 4px 0 rgba(12,21,26,.6)}
+.note{font-size:14px}
+input[type=text],textarea{font:500 16px/1.3 var(--body);border:3px solid #3a5666}
+.vh{border-radius:0!important}
+body.night .tabs button[aria-pressed=true]{background:#ff4fb3;color:#120c26}
+body.night .tabs{background:#05030d;border-color:#3a2a6a}
+body.night .item .when{color:#ffd35a}
+@media (max-width:720px){ .grp .aitem strong{font-size:9px} .tt .hr{font-size:8px} }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -1826,7 +1900,7 @@ function buildDoc(){
   var json=JSON.stringify(STATE,cleanKeys,1).replace(/</g,"\\u003c");
   var S="<"+"script", E="<"+"/script>";
   return "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>"+PAGE_TITLE+"</title>\n"+
-   "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\""+FONT_URL+"\" rel=\"stylesheet\">\n"+
+   "<link href=\"https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\""+FONT_URL+"\" rel=\"stylesheet\">\n"+
    "<style id=\"css\">"+css+"</style>\n"+S+" src=\""+THREE_URL+"\">"+E+"\n"+S+" src=\""+ORBIT_URL+"\">"+E+"\n</head>\n<body>\n"+
    S+" id=\"state\" type=\"application/json\">"+json+E+"\n"+S+" id=\"app\">"+app+E+"\n</body>\n</html>\n";
 }
