@@ -60,6 +60,9 @@ body{background:#cfdfe4;color:var(--paper);font:15px/1.45 var(--body);overflow:h
 .sec:first-child{margin-top:4px}
 .sq{display:inline-block;width:26px;height:26px;border-radius:7px;background:var(--c);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.3) 0 4px,transparent 4px 8px);flex:none}
 .alist{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.grp{margin:0 0 12px}
+.grp .aitem strong{font-size:16px}
+.glist{list-style:none;margin:2px 0 0 22px;padding:0 0 0 6px;border-left:3px solid var(--c);display:grid;gap:2px}
 .item .inc{display:block;color:var(--mist);font-size:12.5px;margin-top:3px}
 .ahint{margin:0;color:var(--mist);font-size:12.5px}
 #placebar .pbb{display:flex;gap:6px}
@@ -1418,29 +1421,30 @@ function renderHeader(){ $("ev-title").textContent=STATE.title||"Mapa del evento
 function renderList(){
   var sc=$("scroll"), keepTop=sc.scrollTop; sc.innerHTML="";
   if (!EDIT){
-    if (STATE.areas.length){
-      var h1=document.createElement("p"); h1.className="sec"; h1.textContent="Áreas"; sc.appendChild(h1);
-      var ul=document.createElement("ul"); ul.className="alist";
-      STATE.areas.forEach(function(a){
-        var inc=pinsIn(a).map(function(p){ return p.name; }).filter(Boolean);
-        var li=document.createElement("li");
-        li.innerHTML='<button class="item aitem" type="button" data-aid="'+esc(a.id)+'"><span class="sq" style="--c:'+esc(a.color)+'"></span><span><strong>'+esc(a.name||"Área sin nombre")+'</strong>'+(inc.length?'<span class="inc">'+esc(inc.join(" · "))+'</span>':'')+'</span></button>';
-        li.firstChild.addEventListener("click", function(){ selectArea(a.id, true); });
-        li.firstChild.classList.toggle("on", selectedArea===a.id);
-        ul.appendChild(li);
-      });
-      sc.appendChild(ul);
-      var h2=document.createElement("p"); h2.className="sec"; h2.textContent="Atracciones"; sc.appendChild(h2);
-    }
-    var ol=document.createElement("ol"); ol.id="list";
-    STATE.pins.forEach(function(p,i){
-      var li=document.createElement("li");
+    /* atracciones agrupadas por área; las que no caen en ninguna van al final */
+    var used={};
+    function pinItem(p){
+      var i=STATE.pins.indexOf(p), li=document.createElement("li");
       li.innerHTML='<button class="item" type="button" data-id="'+esc(p.id)+'"><span class="num" style="--c:'+esc(p.color)+'">'+(i+1)+'</span><span><strong>'+esc(p.name||"Sin nombre")+'</strong>'+(p.desc?'<span class="d">'+esc(p.desc)+'</span>':'')+'</span></button>';
       li.firstChild.addEventListener("click", function(){ select(p.id, true); });
       li.firstChild.classList.toggle("on", selected===p.id);
-      ol.appendChild(li);
+      return li;
+    }
+    STATE.areas.forEach(function(a){
+      var mine=pinsIn(a).filter(function(p){ return !used[p.id]; }); mine.forEach(function(p){ used[p.id]=1; });
+      var grp=document.createElement("section"); grp.className="grp"; grp.style.setProperty("--c",a.color);
+      grp.innerHTML='<button class="item aitem" type="button" data-aid="'+esc(a.id)+'"><span class="sq" style="--c:'+esc(a.color)+'"></span><span><strong>'+esc(a.name||"Área sin nombre")+'</strong></span></button>';
+      grp.firstChild.addEventListener("click", function(){ selectArea(a.id, true); });
+      grp.firstChild.classList.toggle("on", selectedArea===a.id);
+      if (mine.length){ var gl=document.createElement("ol"); gl.className="glist"; mine.forEach(function(p){ gl.appendChild(pinItem(p)); }); grp.appendChild(gl); }
+      sc.appendChild(grp);
     });
-    sc.appendChild(ol); return;
+    var rest=STATE.pins.filter(function(p){ return !used[p.id]; });
+    if (rest.length){
+      if (STATE.areas.length){ var h2=document.createElement("p"); h2.className="sec"; h2.textContent="Otras atracciones"; sc.appendChild(h2); }
+      var ol=document.createElement("ol"); ol.id="list"; rest.forEach(function(p){ ol.appendChild(pinItem(p)); }); sc.appendChild(ol);
+    }
+    return;
   }
   var wrap=document.createElement("div");
   wrap.innerHTML='<p class="note">'+(STATE.examples?'Estas atracciones son ejemplos: cambialas por las tuyas. ':'')+'Para mover una atracción, arrastrá su globo. Para agregar una, tocá «+ Agregar atracción» y después el lugar en el mapa. Para marcar un área, tocá «+ Nueva área» y marcá sus esquinas en el mapa. Nada cambia para los invitados hasta que guardes.</p>'+
