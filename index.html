@@ -64,6 +64,19 @@ body{background:#cfdfe4;color:var(--paper);font:15px/1.45 var(--body);overflow:h
 .tabs button{flex:1;border:0;background:transparent;color:var(--mist);font:600 14px/1 var(--body);padding:9px 8px;border-radius:8px;cursor:pointer}
 .tabs button[aria-pressed=true]{background:var(--ochre);color:#1f1a0c}
 .tabs button:focus-visible{outline:2px solid var(--paper);outline-offset:1px}
+@media (min-width:721px){ body.wide #panel{width:min(780px,calc(100vw - 32px))} }
+.tw{overflow-x:auto;margin:0 -4px;padding:0 0 8px;-webkit-overflow-scrolling:touch}
+.tt{border-collapse:separate;border-spacing:0;width:100%;min-width:660px;table-layout:fixed}
+.tt th{text-align:left;font:600 12.5px/1.2 var(--body);color:var(--paper);padding:6px 5px 7px;vertical-align:bottom}
+.tt thead th{border-bottom:3px solid var(--c,rgba(255,255,255,.25))}
+.tt .hr{width:54px;position:sticky;left:0;z-index:1;background:var(--forest);font:700 14px/1.3 var(--body);font-variant-numeric:tabular-nums;vertical-align:top;padding-top:9px}
+.tt thead .hr{font:600 12.5px/1.2 var(--body);vertical-align:bottom}
+.tt td{padding:4px 3px;vertical-align:top;border-top:1px solid rgba(255,255,255,.09)}
+.tt tbody th{border-top:1px solid rgba(255,255,255,.09)}
+.chip{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 24%,transparent);color:var(--paper);font:600 12.5px/1.25 var(--body);padding:6px 6px;border-radius:6px;margin:0 0 3px;cursor:pointer;overflow-wrap:anywhere}
+.chip:hover{background:color-mix(in srgb,var(--c) 40%,transparent)}
+@media (max-width:720px){ .tt{min-width:820px} }
+.chip:focus-visible{outline:2px solid var(--ochre)}
 .sched{list-style:none;margin:0;padding:0}
 .sched li.new{border-top:1px solid rgba(255,255,255,.1);margin-top:4px;padding-top:4px}
 .sched li.new:first-child{border-top:0;margin-top:0;padding-top:0}
@@ -488,7 +501,7 @@ body.night input[type=text],body.night textarea{background:#0b0720}
    "t": "23:00",
    "name": "Baile",
    "group": "salon",
-   "open": true
+   "end": "01:30"
   },
   {
    "t": "23:00",
@@ -502,6 +515,21 @@ body.night input[type=text],body.night textarea{background:#0b0720}
    "name": "Panchitos",
    "group": "comida"
   }
+ ],
+ "scheduleRows": [
+  "11:00",
+  "12:30",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:30",
+  "23:00",
+  "00:00",
+  "01:30"
  ]
 }</script>
 <script id="app">
@@ -1552,26 +1580,33 @@ function schedGroup(e){ var a=areaById(e.group); if (a) return {name:a.name, col
 function whenFor(p){ return (STATE.schedule||[]).filter(function(e){ return e.pin===p.id; }).map(function(e){ return e.end ? e.t+" a "+e.end : (e.open ? "Desde las "+e.t : e.t); }).join(" · "); }
 function renderList(){
   var sc=$("scroll"), keepTop=sc.scrollTop; sc.innerHTML="";
+  document.body.classList.toggle("wide", !EDIT && TAB==="horarios" && (STATE.schedule||[]).length>0);
   if (!EDIT){
     var hasSched=(STATE.schedule||[]).length>0;
     if (hasSched){
       var tabs=document.createElement("div"); tabs.className="tabs"; tabs.setAttribute("role","group"); tabs.setAttribute("aria-label","Qué ver");
       tabs.innerHTML='<button type="button" data-tab="lugares" aria-pressed="'+(TAB==="lugares")+'">Lugares</button><button type="button" data-tab="horarios" aria-pressed="'+(TAB==="horarios")+'">Horarios</button>';
-      tabs.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ TAB=b.dataset.tab; renderList(); $("scroll").scrollTop=0; }); });
+      tabs.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ TAB=b.dataset.tab; renderList(); $("scroll").scrollTop=0; resize(); }); });
       sc.appendChild(tabs);
     }
     if (hasSched && TAB==="horarios"){
-      var ul=document.createElement("ul"); ul.className="sched"; var prev=null;
-      STATE.schedule.forEach(function(e){
-        var g=schedGroup(e), pin=e.pin && STATE.pins.filter(function(q){ return q.id===e.pin; })[0], area=areaById(e.group), can=!!(pin||area||e.group==="salon");
-        var li=document.createElement("li"); if (e.t!==prev) li.className="new";
-        li.innerHTML='<'+(can?'button type="button"':'div')+' class="ev"><span class="h">'+(e.t!==prev?esc(e.t):'')+'</span><span><strong>'+esc(e.name)+'</strong><span class="tag" style="--c:'+esc(g.color)+'"><i></i>'+esc(g.name)+(e.end?' · hasta las '+esc(e.end):(e.open?' · en adelante':''))+'</span></span></'+(can?'button':'div')+'>';
-        if (can) li.firstChild.addEventListener("click", function(){
-          if (pin) select(pin.id,true); else if (area) selectArea(area.id,true);
-          else { if (MOBILE) setSheet(false); var dir=camera.position.clone().sub(controls.target); dir.setLength(95); flyTo(new THREE.Vector3(3,0,-8), new THREE.Vector3(3,0,-8).add(dir)); } });
-        prev=e.t; ul.appendChild(li);
+      /* tabla: una fila por hora y una columna por zona */
+      var rows=STATE.scheduleRows||[], cols=STATE.areas.map(function(a){ return a.id; }).concat(["comida","salon"]);
+      function ri(t){ var i=rows.indexOf(t); return i<0?rows.length:i; }
+      var h='<div class="tw"><table class="tt"><thead><tr><th class="hr" scope="col">Hora</th>'+cols.map(function(c){ var g=schedGroup({group:c}); return '<th scope="col" style="--c:'+esc(g.color)+'">'+esc(g.name)+'</th>'; }).join("")+'</tr></thead><tbody>';
+      rows.forEach(function(t,r){
+        h+='<tr><th class="hr" scope="row">'+esc(t)+'</th>'+cols.map(function(c){
+          var g=schedGroup({group:c});
+          return '<td>'+STATE.schedule.map(function(e,ei){
+            if (e.group!==c) return ""; var a=ri(e.t), b=e.end?ri(e.end):(e.open?rows.length:a+1); if (r<a||r>=b) return "";
+            return '<button type="button" class="chip" data-ev="'+ei+'" style="--c:'+esc(g.color)+'">'+esc(e.name)+'</button>'; }).join("")+'</td>'; }).join("")+'</tr>';
       });
-      sc.appendChild(ul); return;
+      var wrapT=document.createElement("div"); wrapT.innerHTML=h+'</tbody></table></div>'; sc.appendChild(wrapT);
+      wrapT.querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click", function(){
+        var e=STATE.schedule[+b.dataset.ev], pin=e.pin && STATE.pins.filter(function(q){ return q.id===e.pin; })[0], area=areaById(e.group);
+        if (pin) select(pin.id,true); else if (area) selectArea(area.id,true);
+        else if (e.group==="salon"){ if (MOBILE) setSheet(false); var dir=camera.position.clone().sub(controls.target); dir.setLength(95); flyTo(new THREE.Vector3(3,0,-8), new THREE.Vector3(3,0,-8).add(dir)); } }); });
+      return;
     }
     /* atracciones agrupadas por área; las que no caen en ninguna van al final */
     var used={};
