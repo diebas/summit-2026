@@ -65,7 +65,12 @@ body{background:#cfdfe4;color:var(--paper);font:15px/1.45 var(--body);overflow:h
 .tabs button[aria-pressed=true]{background:var(--ochre);color:#1f1a0c}
 .tabs button:focus-visible{outline:2px solid var(--paper);outline-offset:1px}
 @media (min-width:721px){ body.wide #panel{width:min(780px,calc(100vw - 32px))} }
-.tw{overflow-x:auto;margin:0 -4px;padding:0 0 8px;-webkit-overflow-scrolling:touch}
+.tw{position:relative;overflow-x:auto;margin:0 -4px;padding:0 0 8px;-webkit-overflow-scrolling:touch}
+.nowline{position:absolute;left:0;height:0;border-top:2px solid #ff5a4f;z-index:3;pointer-events:none;transition:top .6s linear}
+.nowline span{position:sticky;left:0;display:inline-block;transform:translateY(-55%);background:#ff5a4f;color:#fff;font:700 12px/1 var(--body);font-variant-numeric:tabular-nums;padding:4px 7px;border-radius:999px;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.tt tr.past .chip{opacity:.45}
+.tt tr.past .hr{color:var(--mist)}
+.tt tr.now .hr{color:var(--ochre)}
 .tt{border-collapse:separate;border-spacing:0;width:100%;min-width:660px;table-layout:fixed}
 .tt th{text-align:left;font:600 12.5px/1.2 var(--body);color:var(--paper);padding:6px 5px 7px;vertical-align:bottom}
 .tt thead th{border-bottom:3px solid var(--c,rgba(255,255,255,.25))}
@@ -1575,6 +1580,28 @@ function addDrawPoint(x,z){
 
 /* ---------- panel ---------- */
 function renderHeader(){ $("ev-title").textContent=STATE.title||"Mapa del evento"; $("ev-sub").textContent=STATE.subtitle||""; }
+/* marcador de la hora actual en la tabla de horarios (hora de Uruguay) */
+function nowMinutes(){
+  if (typeof window.__now==="number") return window.__now;   // para pruebas
+  var hm; try{ hm=new Intl.DateTimeFormat("en-GB",{timeZone:"America/Montevideo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date()).split(":"); }catch(_){ var d=new Date(); hm=[d.getHours(),d.getMinutes()]; }
+  return (+hm[0]%24)*60+(+hm[1]);
+}
+function placeNow(){
+  var tw=document.querySelector(".tw"); if (!tw) return;
+  var trs=[].slice.call(tw.querySelectorAll("tbody tr")), rows=STATE.scheduleRows||[], line=tw.querySelector(".nowline");
+  if (!line){ line=document.createElement("div"); line.className="nowline"; line.innerHTML="<span></span>"; tw.appendChild(line); }
+  function mins(t){ var q=t.split(":"), m=(+q[0])*60+(+q[1]); return m<6*60 ? m+1440 : m; }     // la madrugada sigue al mismo día
+  var T=rows.map(mins), now=nowMinutes(); if (now<6*60) now+=1440;
+  var end=T[T.length-1]+60, cur=-1; for (var i=0;i<T.length;i++) if (now>=T[i]) cur=i;
+  trs.forEach(function(tr,i){ tr.classList.toggle("past", cur>i || now>=end); tr.classList.toggle("now", cur===i && now<end); });
+  if (cur<0 || now>=end){ line.hidden=true; return; }
+  var base=tw.getBoundingClientRect().top, a=trs[cur].getBoundingClientRect(), y0=a.top-base, y1=(cur+1<trs.length ? trs[cur+1].getBoundingClientRect().top-base : a.bottom-base);
+  var f=Math.min(1,(now-T[cur])/((cur+1<T.length?T[cur+1]:end)-T[cur]));
+  line.hidden=false; line.style.top=(y0+(y1-y0)*f).toFixed(1)+"px"; line.style.width=tw.scrollWidth+"px";
+  var hh=Math.floor(now/60)%24, mm=now%60; line.firstChild.textContent=(hh<10?"0":"")+hh+":"+(mm<10?"0":"")+mm;
+}
+setInterval(placeNow, 20000);
+addEventListener("resize", function(){ setTimeout(placeNow, 50); });
 var TAB="lugares";
 function schedGroup(e){ var a=areaById(e.group); if (a) return {name:a.name, color:a.color}; return e.group==="comida" ? {name:"Comida", color:"#d9482b"} : {name:"Salón principal", color:"#2f7fbf"}; }
 function whenFor(p){ return (STATE.schedule||[]).filter(function(e){ return e.pin===p.id; }).map(function(e){ return e.end ? e.t+" a "+e.end : (e.open ? "Desde las "+e.t : e.t); }).join(" · "); }
@@ -1602,6 +1629,7 @@ function renderList(){
             return '<button type="button" class="chip" data-ev="'+ei+'" style="--c:'+esc(g.color)+'">'+esc(e.name)+'</button>'; }).join("")+'</td>'; }).join("")+'</tr>';
       });
       var wrapT=document.createElement("div"); wrapT.innerHTML=h+'</tbody></table></div>'; sc.appendChild(wrapT);
+      placeNow(); setTimeout(placeNow, 400);
       wrapT.querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click", function(){
         var e=STATE.schedule[+b.dataset.ev], pin=e.pin && STATE.pins.filter(function(q){ return q.id===e.pin; })[0], area=areaById(e.group);
         if (pin) select(pin.id,true); else if (area) selectArea(area.id,true);
