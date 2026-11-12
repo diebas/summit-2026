@@ -724,7 +724,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $("scene").appendChild(renderer.domElement);
 
-var SKY = 0xcfdfe4;
+var SKY = 0xcfdfe4, FOGBASE=[330,720];
 var scene = new THREE.Scene();
 scene.background = new THREE.Color(SKY);
 scene.fog = new THREE.Fog(SKY, 330, 720);
@@ -1207,7 +1207,7 @@ var NIGHT = (function(){
   var NGT={sky:0x070b1a, fog:[200,560], hemi:[0x4a5aa8,0x0a120c,.42], sun:[0x9db4ff,.42], sunPos:[90,160,-60]};
   function set(on){
     var t=on?NGT:DAY;
-    scene.background.setHex(t.sky); scene.fog.color.setHex(t.sky); scene.fog.near=t.fog[0]; scene.fog.far=t.fog[1];
+    scene.background.setHex(t.sky); scene.fog.color.setHex(t.sky); scene.fog.near=t.fog[0]; scene.fog.far=t.fog[1]; FOGBASE=[t.fog[0],t.fog[1]];
     hemi.color.setHex(t.hemi[0]); hemi.groundColor.setHex(t.hemi[1]); hemi.intensity=t.hemi[2];
     sun.color.setHex(t.sun[0]); sun.intensity=t.sun[1]; sun.position.set(t.sunPos[0],t.sunPos[1],t.sunPos[2]);
     lights.forEach(function(l){ l.intensity = on ? l.userData.i : 0; });
@@ -2148,6 +2148,9 @@ function frame(now){
   if (!REDUCED) LIFE.forEach(function(f){ f(now); });
   if (!REDUCED) for (var pk in propObjs){ var po=propObjs[pk]; if (po.g.userData.anim) po.g.userData.anim(now); }
   controls.update();
+  /* la niebla se aleja junto con la cámara: al alejarse el predio no se oscurece ni se borra */
+  var camD=camera.position.distanceTo(controls.target), fx=Math.max(0, camD-170);
+  scene.fog.near=FOGBASE[0]+fx*1.1; scene.fog.far=FOGBASE[1]+fx*1.6;
   /* no dejar que el mapa se vaya del predio al arrastrar */
   var tx=Math.max(-110,Math.min(150,controls.target.x)), tz=Math.max(-170,Math.min(130,controls.target.z));
   if (tx!==controls.target.x || tz!==controls.target.z){ camera.position.x+=tx-controls.target.x; camera.position.z+=tz-controls.target.z; controls.target.x=tx; controls.target.z=tz; }
