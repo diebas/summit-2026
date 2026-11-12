@@ -266,12 +266,38 @@ body.night .eyebrow,body.night .sec{text-shadow:none}
 body.night .place{text-shadow:2px 0 0 #05030d,-2px 0 0 #05030d,0 2px 0 #05030d,0 -2px 0 #05030d;font-weight:400}
 body.night .pin{background:#120c26;color:#fff;border:3px solid var(--c);box-shadow:3px 3px 0 #05030d}
 body.night .pin b{box-shadow:inset -3px -3px 0 rgba(0,0,0,.28)}
-body.night .zone{font:400 8px/1.3 var(--display);background:#120c26;border:3px solid var(--c);box-shadow:3px 3px 0 #05030d;text-shadow:none}
+body.night .zone{font:400 8px/1.3 var(--display);background:var(--c);color:#fff;border:3px solid #05030d;box-shadow:3px 3px 0 #05030d;text-shadow:1px 1px 0 rgba(0,0,0,.5)}
 body.night .views,body.night #compass,body.night #daynight,body.night #hint{background:#120c26;border:3px solid #ff4fb3;box-shadow:3px 3px 0 #05030d;color:#f4efff}
 body.night .views button[aria-pressed=true]{background:#ff4fb3;color:#120c26}
 body.night .num,body.night .sq{box-shadow:inset -3px -3px 0 rgba(0,0,0,.28)}
 @media (max-width:720px){ h1{font-size:13px} body.night h1{font-size:13px} .place{font-size:7px} .zone{font-size:7px;padding:4px 6px} .pin{font-size:14px} .btn.toggle{font-size:14px} }
 
+/* agenda móvil */
+.afilter{display:flex;gap:6px;overflow-x:auto;margin:0 -12px 12px;padding:2px 12px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.afilter::-webkit-scrollbar{display:none}
+.afilter button{flex:none;display:flex;align-items:center;gap:6px;border:3px solid #3a5666;background:#0c151a;color:var(--paper);font:600 15px/1 var(--body);padding:9px 12px;cursor:pointer}
+.afilter button i{width:10px;height:10px;background:var(--c);border:2px solid #0c151a}
+.afilter button[aria-pressed=true]{background:#ffcd3c;color:#0c151a;border-color:#ffcd3c}
+.anow{margin:0 0 14px;padding:10px;border:3px solid #ff5a4f;background:rgba(255,90,79,.08);display:grid;gap:6px}
+.ahead{margin:2px 2px 2px;display:flex;align-items:center;gap:8px;font:400 10px/1.4 var(--display);color:#ff5a4f}
+.ahead.nx{color:#7fe0c2;margin-top:8px}
+.ahead .dot{width:10px;height:10px;background:#ff3b30;border:2px solid #0c151a;animation:livedot 1.2s ease-in-out infinite}
+.acard{display:grid;gap:3px;width:100%;text-align:left;border:0;border-left:6px solid var(--c);background:color-mix(in srgb,var(--c) 20%,#1b2b34);color:var(--paper);padding:11px 12px;cursor:pointer;box-shadow:inset -3px -3px 0 rgba(0,0,0,.22)}
+.acard .an{font:600 18px/1.2 var(--body)}
+.acard .am{font:500 15px/1.2 var(--body);color:var(--mist);font-variant-numeric:tabular-nums}
+.acard.past{opacity:.45}
+.acard.live{outline:3px solid #ff5a4f;outline-offset:-3px}
+.acard:focus-visible{outline:3px solid #ffcd3c}
+.agenda{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.arow{display:grid;grid-template-columns:58px 1fr;gap:10px;align-items:start}
+.atime{font:400 11px/1.6 var(--display);color:#ffcd3c;padding-top:12px}
+.arow.past .atime{color:var(--mist)}
+.aitems{display:grid;gap:6px}
+body.night .afilter button[aria-pressed=true]{background:#ff4fb3;border-color:#ff4fb3;color:#120c26}
+body.night .acard{background:color-mix(in srgb,var(--c) 22%,#120c26)}
+body.night .atime{color:#ffd35a}
+@media (prefers-reduced-motion:reduce){.ahead .dot{animation:none}}
+@media (max-width:720px){ body.wide #panel:not(.closed){height:86%} }
 /* elementos agregados después de la prueba */
 .tabs{background:#0c151a;padding:4px;border:3px solid #3a5666}
 .tabs button{font:600 16px/1 var(--body);color:#9fb8a8;padding:9px 8px}
@@ -642,7 +668,6 @@ document.body.insertAdjacentHTML("afterbegin",
  ' <div class="hbtns"><button class="btn small" type="button" id="edit-btn" hidden>Editar mapa</button><button class="btn small toggle" type="button" id="toggle" aria-expanded="true">Ocultar</button></div></header>'+
  ' <div id="selcard" hidden role="status" aria-live="polite"></div>'+
  ' <div id="scroll"></div>'+
- ' <p class="foot">Establecimiento Las Carretas · Ruta 36, Melilla<br>Modelo aproximado, hecho a partir de la vista satelital y fotos del lugar.</p>'+
  '</aside>'+
  '<div id="hud"><button id="daynight" type="button" aria-pressed="false" title="Cambiar a noche" aria-label="Modo noche"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg><span id="dn-text">Noche</span></button><button id="compass" title="Volver al norte" aria-label="Orientar al norte"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 L22 17 L17 15 L12 17 Z" fill="#a8452f"/><path d="M17 31 L22 17 L17 19 L12 17 Z" fill="#9aa59f"/><text x="17" y="12.5" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="Figtree,sans-serif">N</text></svg></button>'+
  ' <div class="views" role="group" aria-label="Vista"><button data-view="3d" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Plano</button></div></div>'+
@@ -1222,8 +1247,8 @@ var selected = null;
 var stickGeo = new THREE.CylinderGeometry(.14,.14,10,6); stickGeo.translate(0,5,0);
 var headGeo = new THREE.SphereGeometry(1.05,16,12);
 var ringGeo = new THREE.RingGeometry(1.4,2.3,32); ringGeo.rotateX(-Math.PI/2);
-var liveBeamGeo=(function(){ var g=new THREE.CylinderGeometry(1.6,3.2,22,20,1,true); g.translate(0,11,0); return g; })();
-var liveRingGeo=(function(){ var g=new THREE.RingGeometry(2.6,3.3,40); g.rotateX(-Math.PI/2); return g; })();
+var liveBeamGeo=(function(){ var g=new THREE.CylinderGeometry(2.4,5.2,24,24,1,true); g.translate(0,12,0); return g; })();
+var liveRingGeo=(function(){ var g=new THREE.RingGeometry(4.2,5.4,48); g.rotateX(-Math.PI/2); return g; })();
 var liveHaloTex=(function(){ var cv=document.createElement("canvas"); cv.width=cv.height=64; var c=cv.getContext("2d"); var gr=c.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,"rgba(255,255,255,.95)"); gr.addColorStop(.35,"rgba(255,255,255,.4)"); gr.addColorStop(1,"rgba(255,255,255,0)"); c.fillStyle=gr; c.fillRect(0,0,64,64); return new THREE.CanvasTexture(cv); })();
 function makePin(p){
   var g=new THREE.Group(); var mat=lam(p.color); var ringMat=new THREE.MeshBasicMaterial({color:p.color, transparent:true, opacity:.75});
@@ -1232,7 +1257,7 @@ function makePin(p){
   var rg=new THREE.Mesh(ringGeo, ringMat); rg.position.y=.12; g.add(rg);
   var pulseMat=new THREE.MeshBasicMaterial({color:p.color, transparent:true, opacity:0, depthWrite:false});
   var pulses=[0,1].map(function(){ var m=new THREE.Mesh(liveRingGeo, pulseMat.clone()); m.position.y=.16; m.visible=false; g.add(m); return m; });
-  var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:liveHaloTex, color:p.color, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending})); halo.position.y=10.4; halo.scale.set(7,7,1); halo.visible=false; g.add(halo);
+  var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:liveHaloTex, color:p.color, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending})); halo.position.y=10.4; halo.scale.set(10,10,1); halo.visible=false; g.add(halo);
   var beam=new THREE.Mesh(liveBeamGeo, new THREE.MeshBasicMaterial({color:p.color, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide})); beam.visible=false; g.add(beam);
   g.position.set(p.x,0,p.z); scene.add(g);
   var el=document.createElement("button"); el.className="pin"; el.type="button"; el.style.setProperty("--c",p.color);
@@ -1711,11 +1736,62 @@ function updateLive(){
   STATE.pins.forEach(function(p){ var o=pinObjs[p.id]; if (o) o.el.classList.toggle("live", !!LIVE.pins[p.id]); });
   STATE.areas.forEach(function(a){ var o=areaObjs[a.id]; if (o && o.el) o.el.classList.toggle("live", !!LIVE.areas[a.id]); });
   places.forEach(function(pl){ if (pl.t==="Salón principal") pl.el.classList.toggle("live", !!LIVE.salon); });
-  if (!EDIT && TAB!=="horarios") renderList();
+  if (!EDIT && (TAB!=="horarios" || W<=720)) renderList();
 }
 setInterval(updateLive, 20000);
 setInterval(placeNow, 20000);
 addEventListener("resize", function(){ setTimeout(placeNow, 50); });
+/* horarios en el celular: "ahora" arriba, filtro por zona y agenda vertical */
+var AFILTER="todas";
+function shortZone(n){ n=(n||"").replace(/^Área (de )?/i,""); return n.charAt(0).toUpperCase()+n.slice(1); }
+function fmtRange(e){ return e.end ? e.t+" – "+e.end : (e.open ? "desde "+e.t : e.t); }
+function goEvent(e){
+  var pin=e.pin && STATE.pins.filter(function(q){ return q.id===e.pin; })[0], area=areaById(e.group);
+  if (pin) select(pin.id,true); else if (area) selectArea(area.id,true);
+  else if (e.group==="salon"){ setSheet(false); var dir=camera.position.clone().sub(controls.target); dir.setLength(110); flyTo(new THREE.Vector3(3,0,-8), new THREE.Vector3(3,0,-8).add(dir)); }
+}
+function renderAgenda(sc){
+  var now=nowMinutes(); if (now<6*60) now+=1440;
+  var groups=STATE.areas.map(function(a){ return a.id; }).concat(["comida","salon"]);
+  var evs=STATE.schedule.map(function(e,i){ var w=eventWindow(e); return {e:e, i:i, a:w[0], b:w[1], g:schedGroup(e)}; })
+    .filter(function(x){ return AFILTER==="todas" || x.e.group===AFILTER; });
+  // filtro
+  var f=document.createElement("div"); f.className="afilter"; f.setAttribute("role","group"); f.setAttribute("aria-label","Filtrar por zona");
+  f.innerHTML='<button type="button" data-f="todas" aria-pressed="'+(AFILTER==="todas")+'">Todo</button>'+groups.map(function(g){ var sg=schedGroup({group:g}); return '<button type="button" data-f="'+esc(g)+'" style="--c:'+esc(sg.color)+'" aria-pressed="'+(AFILTER===g)+'"><i></i>'+esc(shortZone(sg.name))+'</button>'; }).join("");
+  f.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ AFILTER=b.dataset.f; renderList(); }); });
+  sc.appendChild(f);
+  function card(x, showZone, inBox){
+    var past=now>=x.b, live=now>=x.a && now<x.b && !inBox;
+    var b=document.createElement("button"); b.type="button"; b.className="acard"+(past?" past":"")+(live?" live":""); b.style.setProperty("--c",x.g.color);
+    b.innerHTML='<span class="an">'+esc(x.e.name)+(live?' <em class="nowbadge">Ahora</em>':'')+'</span><span class="am">'+esc(fmtRange(x.e))+(showZone?' · '+esc(shortZone(x.g.name)):'')+'</span>';
+    b.addEventListener("click", function(){ goEvent(x.e); }); return b;
+  }
+  // ahora / después
+  var live=evs.filter(function(x){ return now>=x.a && now<x.b; }), nextT=null;
+  evs.forEach(function(x){ if (x.a>now && (nextT===null || x.a<nextT)) nextT=x.a; });
+  var next=evs.filter(function(x){ return x.a===nextT; });
+  if (live.length || next.length){
+    var box=document.createElement("div"); box.className="anow";
+    if (live.length){ var h=document.createElement("p"); h.className="ahead"; h.innerHTML='<span class="dot"></span>Ahora'; box.appendChild(h); live.forEach(function(x){ box.appendChild(card(x,true,true)); }); }
+    if (next.length){ var h2=document.createElement("p"); h2.className="ahead nx"; h2.textContent="Después · "+next[0].e.t; box.appendChild(h2); next.forEach(function(x){ box.appendChild(card(x,true,true)); }); }
+    sc.appendChild(box);
+  }
+  // agenda completa por hora de inicio
+  var t=document.createElement("p"); t.className="sec"; t.textContent="Todo el día"; sc.appendChild(t);
+  var ol=document.createElement("ol"); ol.className="agenda";
+  var starts=[]; evs.forEach(function(x){ if (starts.indexOf(x.a)<0) starts.push(x.a); }); starts.sort(function(a,b){ return a-b; });
+  starts.forEach(function(st){
+    var items=evs.filter(function(x){ return x.a===st; });
+    var li=document.createElement("li"); li.className="arow"+(items.every(function(x){ return now>=x.b; })?" past":"");
+    var hh=Math.floor(st/60)%24, mm=st%60;
+    li.innerHTML='<div class="atime">'+(hh<10?"0":"")+hh+":"+(mm<10?"0":"")+mm+'</div><div class="aitems"></div>';
+    items.forEach(function(x){ li.lastChild.appendChild(card(x, AFILTER==="todas")); });
+    ol.appendChild(li);
+  });
+  if (!evs.length){ var em=document.createElement("p"); em.className="ahint"; em.textContent="No hay actividades en esta zona."; sc.appendChild(em); }
+  sc.appendChild(ol);
+}
+setInterval(function(){ if (!EDIT && TAB==="horarios" && W<=720){ var k=$("scroll").scrollTop; renderList(); $("scroll").scrollTop=k; } }, 60000);
 var TAB="lugares";
 function schedGroup(e){ var a=areaById(e.group); if (a) return {name:a.name, color:a.color}; return e.group==="comida" ? {name:"Comida", color:"#d9482b"} : {name:"Salón principal", color:"#2f7fbf"}; }
 function whenFor(p){ return (STATE.schedule||[]).filter(function(e){ return e.pin===p.id; }).map(function(e){ return e.end ? e.t+" a "+e.end : (e.open ? "Desde las "+e.t : e.t); }).join(" · "); }
@@ -1730,6 +1806,7 @@ function renderList(){
       tabs.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ TAB=b.dataset.tab; renderList(); $("scroll").scrollTop=0; resize(); }); });
       sc.appendChild(tabs);
     }
+    if (hasSched && TAB==="horarios" && W<=720){ renderAgenda(sc); return; }
     if (hasSched && TAB==="horarios"){
       /* tabla: una fila por hora y una columna por zona */
       var rows=STATE.scheduleRows||[], cols=STATE.areas.map(function(a){ return a.id; }).concat(["comida","salon"]);
@@ -2064,9 +2141,9 @@ function frame(now){
     o.halo.visible=on; o.beam.visible=on; o.pulses.forEach(function(m){ m.visible=on; });
     if (!on){ o.mat.emissive.setHex(0); return; }
     var k=(now/1600)%1;
-    o.pulses.forEach(function(m,i){ var u=REDUCED?.35+i*.3:(k+i*.5)%1; m.scale.setScalar(.6+u*3.2); m.material.opacity=(1-u)*.85; });
+    o.pulses.forEach(function(m,i){ var u=REDUCED?.35+i*.3:(k+i*.5)%1; m.scale.setScalar(.5+u*2.6); m.material.opacity=(1-u)*.9; });
     o.beam.material.opacity=(REDUCED?.16:.1+.1*(.5+.5*Math.sin(now/260)));
-    var beat=REDUCED?.6:.5+.5*Math.sin(now/260); o.halo.material.opacity=.35+.4*beat; var sc=6+2*beat; o.halo.scale.set(sc,sc,1);
+    var beat=REDUCED?.6:.5+.5*Math.sin(now/260); o.halo.material.opacity=.35+.4*beat; var sc=9+3*beat; o.halo.scale.set(sc,sc,1);
     o.mat.emissive.set(p.color); o.mat.emissiveIntensity=.35+.45*beat; });
   if (!REDUCED) LIFE.forEach(function(f){ f(now); });
   if (!REDUCED) for (var pk in propObjs){ var po=propObjs[pk]; if (po.g.userData.anim) po.g.userData.anim(now); }
