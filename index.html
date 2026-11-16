@@ -38,7 +38,7 @@ body{background:#cfdfe4;color:var(--paper);font:15px/1.45 var(--body);overflow:h
 .pin::after{content:"";position:absolute;left:14px;bottom:-5px;width:9px;height:9px;background:#fffdf7;transform:rotate(45deg);z-index:-1}
 .pin.on{box-shadow:0 0 0 3px var(--c),0 4px 14px rgba(20,30,25,.35)}
 .pin:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
-.edit .pin{cursor:grab}
+.edit .pin{cursor:grab;touch-action:none}
 .edit .pin.drag{cursor:grabbing}
 
 #panel{position:fixed;left:16px;top:16px;bottom:16px;width:var(--panel-w);display:flex;flex-direction:column;background:rgba(22,48,42,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:14px;box-shadow:0 10px 40px rgba(10,25,20,.35);overflow:hidden;z-index:5}
@@ -298,6 +298,23 @@ body.night .acard{background:color-mix(in srgb,var(--c) 22%,#120c26)}
 body.night .atime{color:#ffd35a}
 @media (prefers-reduced-motion:reduce){.ahead .dot{animation:none}}
 @media (max-width:720px){ body.wide #panel:not(.closed){height:86%} }
+/* editor */
+.etabs{position:sticky;top:-10px;z-index:2}
+.etabs button{font-size:14px;padding:9px 4px}
+.esec[hidden]{display:none}
+.savebar{position:sticky;bottom:-12px;background:var(--forest);padding:10px 4px 12px;margin:8px -4px -12px;border-top:3px dashed #3a5666;z-index:2}
+.tokenbox{display:grid;gap:8px}
+.tokenbox input{width:100%}
+.sitem{border-left:6px solid var(--c)}
+.srow{grid-template-columns:1fr auto!important}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sgrid label,.scheck{display:grid;gap:4px;font:600 13px/1.2 var(--body);color:var(--mist)}
+.scheck{display:flex;align-items:center;gap:8px;font-size:14px}
+.scheck input{width:20px;height:20px;accent-color:#ffcd3c}
+.sitem select,.sitem input[type=time]{width:100%;min-height:42px;padding:8px;background:#0f2520;color:var(--paper);border:3px solid #3a5666;font:500 16px/1.2 var(--body)}
+.sitem input[type=time]:disabled{opacity:.4}
+body.night .savebar{background:#120c26}
+@media (max-width:720px){ .edit .etabs button{font-size:13px} body.edit #panel:not(.closed){height:70%} }
 /* elementos agregados después de la prueba */
 .tabs{background:#0c151a;padding:4px;border:3px solid #3a5666}
 .tabs button{font:600 16px/1 var(--body);color:#9fb8a8;padding:9px 8px}
@@ -668,7 +685,9 @@ body.night .item .when{color:#ffd35a}
 (function(){
 "use strict";
 var STATE = JSON.parse(document.getElementById("state").textContent);
-var EDIT = false; /* versión pública: solo lectura */
+delete STATE.scheduleRows;   /* las filas de la tabla se calculan a partir de las actividades */
+var BACKEND = "github";    /* "github" en la versión de GitHub Pages */
+var EDIT = location.hash === "#editar";
 var PAGE_TITLE = "Mapa del evento en Las Carretas";
 var THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
 var ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
@@ -1721,7 +1740,7 @@ function nowMinutes(){
 }
 function placeNow(){
   var tw=document.querySelector(".tw"); if (!tw) return;
-  var trs=[].slice.call(tw.querySelectorAll("tbody tr")), rows=STATE.scheduleRows||[], line=tw.querySelector(".nowline");
+  var trs=[].slice.call(tw.querySelectorAll("tbody tr")), rows=schedRows(), line=tw.querySelector(".nowline");
   if (!line){ line=document.createElement("div"); line.className="nowline"; line.innerHTML="<span></span>"; tw.appendChild(line); }
   function mins(t){ var q=t.split(":"), m=(+q[0])*60+(+q[1]); return m<6*60 ? m+1440 : m; }     // la madrugada sigue al mismo día
   var T=rows.map(mins), now=nowMinutes(); if (now<6*60) now+=1440;
@@ -1736,8 +1755,14 @@ function placeNow(){
 /* qué está pasando ahora */
 var LIVE={pins:{}, areas:{}, salon:false, key:""};
 function schedMins(t){ var q=t.split(":"), m=(+q[0])*60+(+q[1]); return m<6*60 ? m+1440 : m; }
+function schedRows(){
+  var set={};
+  (STATE.schedule||[]).forEach(function(e){ if (!/^\d\d:\d\d$/.test(e.t||"")) return; var a=schedMins(e.t); set[a]=1;
+    if (e.end && /^\d\d:\d\d$/.test(e.end)){ var b=schedMins(e.end); for (var h=Math.floor(a/60)*60+60; h<b; h+=60) set[h]=1; } });
+  return Object.keys(set).map(Number).sort(function(x,y){ return x-y; }).map(function(m){ var hh=Math.floor(m/60)%24, mm=m%60; return (hh<10?"0":"")+hh+":"+(mm<10?"0":"")+mm; });
+}
 function eventWindow(e){
-  var rows=(STATE.scheduleRows||[]).map(schedMins), a=schedMins(e.t), b;
+  var rows=schedRows().map(schedMins), a=schedMins(e.t), b;
   if (e.end) b=schedMins(e.end);
   else if (e.open) b=(rows.length?rows[rows.length-1]:a)+60;
   else { b=a+60; for (var i=0;i<rows.length;i++) if (rows[i]>a){ b=rows[i]; break; } }
@@ -1808,6 +1833,39 @@ function renderAgenda(sc){
   sc.appendChild(ol);
 }
 setInterval(function(){ if (!EDIT && TAB==="horarios" && W<=720){ var k=$("scroll").scrollTop; renderList(); $("scroll").scrollTop=k; } }, 60000);
+function renderSchedEditor(box){
+  var h=document.createElement("p"); h.className="note"; h.textContent="Cada actividad tiene hora de inicio y, si dura más de un turno, hora de fin. Si la vinculás a una atracción, el mapa la ilumina mientras está en curso."; box.appendChild(h);
+  STATE.schedule=STATE.schedule||[];
+  STATE.schedule.sort(function(a,b){ return schedMins(a.t||"00:00")-schedMins(b.t||"00:00"); });
+  var groups=STATE.areas.map(function(a){ return [a.id, a.name]; }).concat([["comida","Comida"],["salon","Salón principal"]]);
+  var ul=document.createElement("ul"); ul.className="alist";
+  STATE.schedule.forEach(function(e, idx){
+    var li=document.createElement("li"); li.className="eitem sitem"; var g=schedGroup(e); li.style.setProperty("--c", g.color);
+    li.innerHTML='<div class="row srow"><input type="text" class="s-name" aria-label="Nombre de la actividad"><button class="btn small ghost" type="button" data-act="del">Borrar</button></div>'+
+      '<div class="sgrid"><label>Desde<input type="time" class="s-t" step="300"></label><label>Hasta<input type="time" class="s-end" step="300"></label></div>'+
+      '<label class="scheck"><input type="checkbox" class="s-open"> Sigue hasta el cierre</label>'+
+      '<div class="sgrid"><label>Zona<select class="s-g">'+groups.map(function(q){ return '<option value="'+esc(q[0])+'">'+esc(q[1])+'</option>'; }).join("")+'</select></label>'+
+      '<label>Atracción<select class="s-pin"><option value="">— ninguna —</option>'+STATE.pins.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name||"Sin nombre")+'</option>'; }).join("")+'</select></label></div>';
+    var q=function(c){ return li.querySelector(c); };
+    q(".s-name").value=e.name||""; q(".s-t").value=e.t||""; q(".s-end").value=e.end||""; q(".s-open").checked=!!e.open; q(".s-g").value=e.group||"salon"; q(".s-pin").value=e.pin||"";
+    q(".s-end").disabled=!!e.open;
+    q(".s-name").addEventListener("input", function(ev){ e.name=ev.target.value; dirty(); });
+    q(".s-t").addEventListener("change", function(ev){ if (!ev.target.value) return; e.t=ev.target.value; if (e.end===e.t) delete e.end; dirty(); renderList(); });
+    q(".s-end").addEventListener("change", function(ev){ if (ev.target.value && ev.target.value!==e.t) e.end=ev.target.value; else delete e.end; dirty(); });
+    q(".s-open").addEventListener("change", function(ev){ if (ev.target.checked){ e.open=true; delete e.end; } else delete e.open; dirty(); renderList(); });
+    q(".s-g").addEventListener("change", function(ev){ e.group=ev.target.value; dirty(); renderList(); });
+    q(".s-pin").addEventListener("change", function(ev){ var v=ev.target.value; if (v){ e.pin=v; var p=STATE.pins.filter(function(x){ return x.id===v; })[0], ar=p && STATE.areas.filter(function(a){ return a.points.length>=3 && inPoly(p.x,p.z,a.points); })[0]; if (ar) e.group=ar.id; } else delete e.pin; dirty(); renderList(); });
+    var del=q('[data-act="del"]');
+    del.addEventListener("click", function(){
+      if (!del.dataset.armed){ del.dataset.armed="1"; del.textContent="¿Borrar?"; del.classList.add("danger"); setTimeout(function(){ if(del.isConnected){ delete del.dataset.armed; del.textContent="Borrar"; del.classList.remove("danger"); } },3000); return; }
+      STATE.schedule.splice(STATE.schedule.indexOf(e),1); dirty(); renderList(); });
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  var add=document.createElement("div"); add.className="tools"; add.innerHTML='<button class="btn" type="button">+ Agregar actividad</button>'; box.appendChild(add);
+  add.firstChild.addEventListener("click", function(){ var e={t:"12:00", name:"Nueva actividad", group:"salon"}; STATE.schedule.push(e); dirty(); renderList();
+    var ins=[].slice.call(document.querySelectorAll(".sitem .s-name")).filter(function(i){ return i.value==="Nueva actividad"; }); if (ins.length){ var i=ins[ins.length-1]; i.scrollIntoView({block:"center"}); i.focus(); i.select(); } });
+}
 var TAB="lugares";
 function schedGroup(e){ var a=areaById(e.group); if (a) return {name:a.name, color:a.color}; return e.group==="comida" ? {name:"Comida", color:"#d9482b"} : {name:"Salón principal", color:"#2f7fbf"}; }
 function whenFor(p){ return (STATE.schedule||[]).filter(function(e){ return e.pin===p.id; }).map(function(e){ return e.end ? e.t+" a "+e.end : (e.open ? "Desde las "+e.t : e.t); }).join(" · "); }
@@ -1825,7 +1883,7 @@ function renderList(){
     if (hasSched && TAB==="horarios" && W<=720){ renderAgenda(sc); return; }
     if (hasSched && TAB==="horarios"){
       /* tabla: una fila por hora y una columna por zona */
-      var rows=STATE.scheduleRows||[], cols=STATE.areas.map(function(a){ return a.id; }).concat(["comida","salon"]);
+      var rows=schedRows(), cols=STATE.areas.map(function(a){ return a.id; }).concat(["comida","salon"]);
       function ri(t){ var i=rows.indexOf(t); return i<0?rows.length:i; }
       var h='<div class="tw"><table class="tt"><thead><tr><th class="hr" scope="col">Hora</th>'+cols.map(function(c){ var g=schedGroup({group:c}); return '<th scope="col" style="--c:'+esc(g.color)+'">'+esc(g.name)+'</th>'; }).join("")+'</tr></thead><tbody>';
       rows.forEach(function(t,r){
@@ -1868,16 +1926,33 @@ function renderList(){
     }
     return;
   }
+  if (BACKEND==="github" && !ghToken()){
+    var tk=document.createElement("div"); tk.className="note tokenbox";
+    tk.innerHTML='<b>Conectá este teléfono para poder publicar.</b><br>Pegá tu token de GitHub (solo se guarda en este dispositivo).'+
+      '<input type="password" id="gh-token" autocomplete="off" placeholder="github_pat_…" aria-label="Token de GitHub"><button class="btn primary" type="button" id="gh-token-save">Guardar token</button>';
+    sc.appendChild(tk);
+    $("gh-token-save").addEventListener("click", function(){ var v=$("gh-token").value.trim(); if (!v) return; try{ localStorage.setItem(GH_TOKEN_KEY, v); }catch(_){} CAN_EDIT=true; ghEnterEdit(); });
+  }
+  if (BACKEND==="artifact"){ var on=document.createElement("p"); on.className="note"; on.textContent="Ojo: lo que guardes acá no llega a la versión pública de GitHub Pages. Para el evento, editá desde diebas.github.io/summit-2026/#editar"; sc.appendChild(on); }
+  var ET=document.createElement("div"); ET.className="tabs etabs"; ET.setAttribute("role","group"); ET.setAttribute("aria-label","Qué editar");
+  ET.innerHTML=[["pins","Atracciones"],["horarios","Horarios"],["areas","Áreas"],["general","General"]].map(function(t){ return '<button type="button" data-et="'+t[0]+'" aria-pressed="'+(ETAB===t[0])+'">'+t[1]+'</button>'; }).join("");
+  ET.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ ETAB=b.dataset.et; if (drawing) cancelDrawing(); renderList(); $("scroll").scrollTop=0; }); });
+  sc.appendChild(ET);
+  function sec(k){ var d=document.createElement("div"); d.className="esec"; d.hidden=ETAB!==k; sc.appendChild(d); return d; }
+  var secP=sec("pins"), secH=sec("horarios"), secA=sec("areas"), secG=sec("general");
+  renderSchedEditor(secH);
   var wrap=document.createElement("div");
   wrap.innerHTML='<p class="note">'+(STATE.examples?'Estas atracciones son ejemplos: cambialas por las tuyas. ':'')+'Para mover una atracción, arrastrá su globo. Para agregar una, tocá «+ Agregar atracción» y después el lugar en el mapa. Para marcar un área, tocá «+ Nueva área» y marcá sus esquinas en el mapa. Nada cambia para los invitados hasta que guardes.</p>'+
    '<div class="field"><label for="f-title">Título</label><input type="text" id="f-title"></div>'+
    '<div class="field"><label for="f-sub">Subtítulo</label><input type="text" id="f-sub"></div>';
-  sc.appendChild(wrap);
+  secG.appendChild(wrap);
+  if (BACKEND==="github" && ghToken()){ var fg=document.createElement("div"); fg.className="tools"; fg.innerHTML='<button class="btn small ghost" type="button" id="gh-forget">Desconectar este teléfono (olvidar token)</button>'; secG.appendChild(fg);
+    $("gh-forget").addEventListener("click", function(){ try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(_){} renderList(); }); }
   $("f-title").value=STATE.title||""; $("f-sub").value=STATE.subtitle||"";
   $("f-title").addEventListener("input", function(e){ STATE.title=e.target.value; renderHeader(); dirty(); });
   $("f-sub").addEventListener("input", function(e){ STATE.subtitle=e.target.value; renderHeader(); dirty(); });
-  var ah=document.createElement("p"); ah.className="sec"; ah.textContent="Áreas temáticas"; sc.appendChild(ah);
-  if (STATE.areasDraft){ var an=document.createElement("p"); an.className="note"; an.textContent="Estas 4 áreas son un borrador que ubiqué según tus atracciones. Cambiales el nombre, redibujalas o ajustá sus puntos."; sc.appendChild(an); }
+  var ah=document.createElement("p"); ah.className="sec"; ah.textContent="Áreas temáticas"; secA.appendChild(ah);
+  if (STATE.areasDraft){ var an=document.createElement("p"); an.className="note"; an.textContent="Estas 4 áreas son un borrador que ubiqué según tus atracciones. Cambiales el nombre, redibujalas o ajustá sus puntos."; secA.appendChild(an); }
   var aul=document.createElement("ul"); aul.className="alist";
   STATE.areas.forEach(function(a){
     var li=document.createElement("li"); li.className="eitem aedit"+(selectedArea===a.id?" on":""); li.dataset.aid=a.id;
@@ -1897,10 +1972,10 @@ function renderList(){
       STATE.areas=STATE.areas.filter(function(q){ return q!==a; }); if (selectedArea===a.id) selectedArea=null; syncAreas(); rebuildHandles(); renderList(); areaEdited(); });
     aul.appendChild(li);
   });
-  sc.appendChild(aul);
-  var addA=document.createElement("div"); addA.className="tools"; addA.innerHTML='<button class="btn" type="button" id="add-area">+ Nueva área</button>'; sc.appendChild(addA);
+  secA.appendChild(aul);
+  var addA=document.createElement("div"); addA.className="tools"; addA.innerHTML='<button class="btn" type="button" id="add-area">+ Nueva área</button>'; secA.appendChild(addA);
   $("add-area").addEventListener("click", function(){ if (drawing) cancelDrawing(); else startDrawing(null); });
-  var ph=document.createElement("p"); ph.className="sec"; ph.textContent="Atracciones"; sc.appendChild(ph);
+  var ph=document.createElement("p"); ph.className="note"; ph.textContent="Para cambiar una atracción de lugar, tocá «Mover» y después el lugar nuevo en el mapa (o arrastrá su globo)."; secP.appendChild(ph);
   var ol=document.createElement("ol"); ol.id="list";
   STATE.pins.forEach(function(p,i){
     var li=document.createElement("li"); li.className="eitem"; li.dataset.id=p.id;
@@ -1920,12 +1995,14 @@ function renderList(){
     li.querySelector('[data-act="down"]').addEventListener("click", function(){ move(p,1); });
     li.querySelector("input").addEventListener("focus", function(){ select(p.id,false); });
     li.querySelector('[data-act="go"]').addEventListener("click", function(){ select(p.id,true); });
+    var mv=document.createElement("button"); mv.type="button"; mv.className="btn small"; mv.textContent="Mover"; mv.addEventListener("click", function(){ startMove(p); });
+    li.querySelector('[data-act="go"]').parentNode.insertBefore(mv, li.querySelector('[data-act="go"]'));
     ol.appendChild(li);
   });
-  sc.appendChild(ol);
-  var tools=document.createElement("div"); tools.className="tools";
-  tools.innerHTML='<button class="btn" type="button" id="add">+ Agregar atracción</button>'+
-   '<button class="btn primary" type="button" id="save">Guardar para los invitados</button>'+
+  secP.appendChild(ol);
+  var addP=document.createElement("div"); addP.className="tools"; addP.innerHTML='<button class="btn" type="button" id="add">+ Agregar atracción</button>'; secP.appendChild(addP);
+  var tools=document.createElement("div"); tools.className="tools savebar";
+  tools.innerHTML='<button class="btn primary" type="button" id="save">'+(BACKEND==="github"?"Publicar cambios":"Guardar para los invitados")+'</button>'+
    '<button class="btn small ghost" type="button" id="copy">Copiar datos (respaldo)</button>'+
    '<p class="status" id="status" role="status"></p>';
   sc.appendChild(tools); sc.scrollTop=keepTop;
@@ -1944,7 +2021,13 @@ function readDraft(){ try{ var d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"nu
 function dirty(){ isDirty=true; STATE.examples=false; setStatus("Hay cambios sin guardar."); saveDraft(); }
 function setStatus(t){ var s=$("status"); if (s) s.textContent=t; }
 function move(p, d){ var i=STATE.pins.indexOf(p), j=i+d; if (j<0||j>=STATE.pins.length) return; STATE.pins.splice(i,1); STATE.pins.splice(j,0,p); syncPins(); renderList(); dirty(); }
-var placing=false;
+var placing=false, movingPin=null, ETAB="pins";
+function startMove(p){
+  if (drawing) cancelDrawing(); setPlacing(false); movingPin=p; select(p.id,false); document.body.classList.add("placing");
+  if (MOBILE) setSheet(false);
+  bar("Tocá el mapa donde va «"+(p.name||"la atracción")+"»", [{t:"Cancelar", p:1, f:stopMove}]);
+}
+function stopMove(){ movingPin=null; document.body.classList.remove("placing"); bar(null); if (MOBILE && EDIT) setSheet(true); }
 function bar(text, buttons){
   var pb=$("placebar"); if (!text){ pb.hidden=true; return; }
   pb.hidden=false; $("pb-text").textContent=text; var bb=$("pb-btns"); bb.innerHTML="";
@@ -1967,7 +2050,7 @@ function placeAt(x,z){
 /* modo edición dentro de la página */
 var SAVED = JSON.stringify(STATE, cleanKeys), exitArmed=false;
 function setEdit(on){
-  EDIT=on; document.body.classList.toggle("edit",on); if (drawing) cancelDrawing(); setPlacing(false); exitArmed=false; if (!on) selectedArea=null; syncAreas(); rebuildHandles();
+  EDIT=on; document.body.classList.toggle("edit",on); if (movingPin) stopMove(); if (drawing) cancelDrawing(); setPlacing(false); exitArmed=false; if (!on) selectedArea=null; syncAreas(); rebuildHandles();
   var b=$("edit-btn"); b.hidden = !(on||CAN_EDIT); b.textContent = on ? "Salir de edición" : "Editar mapa";
   if (on && $("panel").classList.contains("closed")) $("toggle").click();
   $("scroll").scrollTop=0;
@@ -1975,7 +2058,7 @@ function setEdit(on){
 }
 var CAN_EDIT=false;
 $("edit-btn").addEventListener("click", function(){
-  if (!EDIT){ setEdit(true); return; }
+  if (!EDIT){ if (BACKEND==="github") ghEnterEdit(); else setEdit(true); return; }
   if (isDirty && !exitArmed){ exitArmed=true; setStatus("Tenés cambios sin guardar. Tocá «Salir de edición» otra vez para descartarlos, o guardá primero."); return; }
   if (isDirty){ STATE=JSON.parse(SAVED); isDirty=false; selected=null; selectedArea=null; clearDraft(); renderHeader(); syncPins(); syncAreas(); }
   setEdit(false);
@@ -1997,12 +2080,59 @@ function buildDoc(){
    "<style id=\"css\">"+css+"</style>\n"+S+" src=\""+THREE_URL+"\">"+E+"\n"+S+" src=\""+ORBIT_URL+"\">"+E+"\n</head>\n<body>\n"+
    S+" id=\"state\" type=\"application/json\">"+json+E+"\n"+S+" id=\"app\">"+app+E+"\n</body>\n</html>\n";
 }
+var GH={owner:"diebas", repo:"summit-2026", path:"data.json", branch:"main"}, GH_TOKEN_KEY="lascarretas-gh-token", ghSha=null, lastRemote=null;
+function ghToken(){ try{ return localStorage.getItem(GH_TOKEN_KEY)||""; }catch(_){ return ""; } }
+function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64dec(b){ return decodeURIComponent(escape(atob(String(b).replace(/\s/g,"")))); }
+function ghApi(method, body){
+  var url="https://api.github.com/repos/"+GH.owner+"/"+GH.repo+"/contents/"+GH.path+(method==="GET" ? "?ref="+GH.branch+"&t="+Date.now() : "");
+  return fetch(url, {method:method, cache:"no-store", headers:{"Authorization":"Bearer "+ghToken(), "Accept":"application/vnd.github+json"}, body: body?JSON.stringify(body):undefined})
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok){ var e=new Error(j.message||("HTTP "+r.status)); e.status=r.status; throw e; } return j; }); });
+}
+function applyState(d){
+  STATE=d; delete STATE.scheduleRows; if (!STATE.areas) STATE.areas=[]; if (!STATE.schedule) STATE.schedule=[];
+  SAVED=JSON.stringify(STATE, cleanKeys); selected=null; selectedArea=null;
+  renderHeader(); syncPins(); syncAreas(); LIVE.key=""; updateLive(); renderList();
+}
+function ghEnterEdit(){
+  if (!EDIT) setEdit(true); else renderList();
+  if (!ghToken()) return;
+  setStatus("Trayendo la última versión publicada…");
+  ghApi("GET").then(function(j){ ghSha=j.sha; var d=JSON.parse(b64dec(j.content)); if (!isDirty) applyState(d); setStatus(isDirty?"Hay cambios sin guardar.":"Editando la última versión publicada."); })
+    .catch(function(e){ setStatus(e.status===401||e.status===403 ? "El token no funciona. Revisalo en General → Desconectar y volvé a pegarlo." : (e.status===404 ? "No encuentro data.json en el repo, o el token no tiene acceso a summit-2026." : "Sin conexión con GitHub ("+e.message+"). Podés seguir editando y publicar después.")); });
+}
+function ghSave(){
+  if (!ghToken()){ setStatus("Primero conectá este teléfono con tu token (arriba)."); return; }
+  setStatus("Publicando…");
+  var text=JSON.stringify(STATE, cleanKeys, 1)+"\n", hm=new Intl.DateTimeFormat("es-UY",{timeZone:"America/Montevideo",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date());
+  (ghSha ? Promise.resolve() : ghApi("GET").then(function(j){ ghSha=j.sha; }))
+  .then(function(){ return ghApi("PUT", {message:"Mapa: cambios desde el editor ("+hm+")", content:b64enc(text), sha:ghSha, branch:GH.branch}); })
+  .then(function(j){ ghSha=j.content&&j.content.sha; lastRemote=null; isDirty=false; SAVED=JSON.stringify(STATE,cleanKeys); clearDraft(); setStatus("Publicado a las "+hm+". En 1 o 2 minutos lo ven todos."); })
+  .catch(function(e){
+    if (e.status===409 || (e.status===422 && /sha/i.test(e.message))){ ghSha=null; saveDraft(); setStatus("Alguien publicó otra versión mientras editabas. Tus cambios quedan guardados en este teléfono: tocá «Publicar cambios» de nuevo para sobrescribir, o salí de edición para ver la otra."); }
+    else if (e.status===401 || e.status===403) setStatus("El token no funciona o no tiene permiso para escribir. Revisalo en General.");
+    else setStatus("No se pudo publicar ("+e.message+"). Tus cambios siguen acá; probá de nuevo cuando tengas señal.");
+  });
+}
+/* los invitados reciben los cambios publicados sin recargar */
+function pullData(){
+  if (BACKEND!=="github" || EDIT || document.visibilityState==="hidden") return;
+  fetch(GH.path+"?t="+Date.now(), {cache:"no-store"}).then(function(r){ return r.ok ? r.text() : null; }).then(function(t){
+    if (!t || t===lastRemote) return; lastRemote=t; var d; try{ d=JSON.parse(t); }catch(_){ return; }
+    var a=JSON.stringify(d,cleanKeys), b=JSON.stringify(STATE,cleanKeys); delete d.scheduleRows; if (JSON.stringify(d,cleanKeys)===b) return;
+    var k=$("scroll").scrollTop; applyState(d); $("scroll").scrollTop=k;
+  }).catch(function(){});
+}
+setInterval(pullData, 60000);
+window.__map={get state(){ return STATE; }, pullData:pullData, schedRows:schedRows, dirty:dirty};
+document.addEventListener("visibilitychange", pullData);
 var artifactP=null;
 function getArtifact(){
   if (!artifactP){ artifactP = (window.claude && typeof window.claude.use==="function") ? window.claude.use("artifact").catch(function(){return null;}) : Promise.resolve(null); }
   return artifactP;
 }
 function save(){
+  if (BACKEND==="github") return ghSave();
   setStatus("Guardando…");
   getArtifact().then(function(a){
     if (!a){ setStatus("Desde acá no se puede guardar. Abrí el mapa en claude.ai (con #editar al final del link) o usá «Copiar datos»."); artifactP=null; return; }
@@ -2063,19 +2193,22 @@ function cardForArea(a){
   var inc=pinsIn(a).map(function(p){ return p.name; }).filter(Boolean);
   return '<span class="sq" style="--c:'+esc(a.color)+'"></span><span><strong>'+esc(a.name||"Área")+'</strong>'+(inc.length?'<span class="d">'+esc(inc.join(" · "))+'</span>':'')+'</span>';
 }
-
+addEventListener("hashchange", function(){ if (location.hash==="#editar" && !EDIT){ if (BACKEND==="github") ghEnterEdit(); else setEdit(true); } });
 /* colocar un globo tocando el mapa */
 var downXY=null;
 renderer.domElement.addEventListener("pointerdown", function(e){ downXY=[e.clientX,e.clientY]; });
 renderer.domElement.addEventListener("pointerup", function(e){
-  if ((!placing && !drawing) || !downXY) return;
+  if ((!placing && !drawing && !movingPin) || !downXY) return;
   if (Math.hypot(e.clientX-downXY[0], e.clientY-downXY[1]) > 6) return;
   var r=renderer.domElement.getBoundingClientRect();
   var m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
   ray.setFromCamera(m, camera);
-  if (ray.ray.intersectPlane(plane, hit)){ if (drawing) addDrawPoint(hit.x, hit.z); else placeAt(hit.x, hit.z); }
+  if (ray.ray.intersectPlane(plane, hit)){
+    if (drawing) addDrawPoint(hit.x, hit.z);
+    else if (movingPin){ var mp=movingPin; mp.x=Math.round(hit.x*2)/2; mp.z=Math.round(hit.z*2)/2; stopMove(); syncPins(); renderList(); dirty(); setStatus("«"+(mp.name||"Atracción")+"» movida. Acordate de publicar."); }
+    else placeAt(hit.x, hit.z); }
 });
-addEventListener("keydown", function(e){ if (e.key!=="Escape") return; if (drawing) cancelDrawing(); else if (placing){ setPlacing(false); setStatus(""); } });
+addEventListener("keydown", function(e){ if (e.key!=="Escape") return; if (movingPin) stopMove(); else if (drawing) cancelDrawing(); else if (placing){ setPlacing(false); setStatus(""); } });
 
 /* ---------- arrastre de globos (modo edición) ---------- */
 var dragging=null, dragMoved=false, ray=new THREE.Raycaster(), plane=new THREE.Plane(new THREE.Vector3(0,1,0),0), hit=new THREE.Vector3();
@@ -2181,10 +2314,12 @@ function frame(now){
   compassSvg.style.transform="rotate("+controls.getAzimuthalAngle()+"rad)";
   renderer.render(scene,camera);
 }
-renderHeader(); syncPins(); syncAreas(); setEdit(false);
+renderHeader(); syncPins(); syncAreas(); if (BACKEND==="github" && ghToken()) CAN_EDIT=true;
+if (BACKEND==="github" && EDIT){ EDIT=false; setEdit(false); ghEnterEdit(); } else setEdit(EDIT);
+if (BACKEND!=="github") detectOwner(0); else pullData();
 if (MOBILE && !EDIT) setSheet(false);
 updateLive();
-(function offerRecovery(){ return;
+(function offerRecovery(){
   var d=readDraft(); if (!d) return;
   if (JSON.stringify(d.state, cleanKeys)===SAVED){ clearDraft(); return; }
   var when=new Date(d.t), hh=("0"+when.getHours()).slice(-2)+":"+("0"+when.getMinutes()).slice(-2);

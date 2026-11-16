@@ -1,0 +1,319 @@
+{
+ "title": "Summit 2026",
+ "subtitle": "Dónde está cada cosa en la chacra",
+ "pins": [
+  {
+   "id": "p7",
+   "name": "Masajes",
+   "desc": "Veni a relajarte",
+   "color": "#2f9e6b",
+   "x": 52.5,
+   "z": 35.5
+  },
+  {
+   "id": "p2",
+   "name": "Tarot",
+   "desc": "Descubri tu futuro bajo los árboles.",
+   "color": "#2f9e6b",
+   "x": 57,
+   "z": -31
+  },
+  {
+   "id": "p5",
+   "name": "Arqueria",
+   "desc": "Proba tu destreza",
+   "color": "#e2b445",
+   "x": -16.5,
+   "z": -69
+  },
+  {
+   "id": "p8",
+   "name": "Samba",
+   "desc": "Seguimos de gira",
+   "color": "#e2b445",
+   "x": -16.5,
+   "z": -33
+  },
+  {
+   "id": "pmwb4lulz",
+   "name": "Futbol Burbuja",
+   "desc": "Rebota Rebota Rebota",
+   "color": "#e2b445",
+   "x": 54.5,
+   "z": -89.5
+  },
+  {
+   "id": "p6",
+   "name": "Food trucks",
+   "desc": "Las mejores sabores",
+   "color": "#e07a1f",
+   "x": 37.5,
+   "z": 8
+  },
+  {
+   "id": "pmwb4pff3",
+   "name": "Personalizados",
+   "desc": "Hacete tu propio merch!",
+   "color": "#7b4fb5",
+   "x": 20.5,
+   "z": -28.5
+  },
+  {
+   "id": "pmwbe662u",
+   "name": "Bartender",
+   "desc": "Veni al mejor taller de tragos",
+   "color": "#e07a1f",
+   "x": 38,
+   "z": -19
+  },
+  {
+   "id": "pmwbe779b",
+   "name": "Sushi",
+   "desc": "Aprende a hacer tu propio sushi",
+   "color": "#e07a1f",
+   "x": 22.5,
+   "z": -2.5
+  },
+  {
+   "id": "pmwbe8r3l",
+   "name": "Macetas",
+   "desc": "Pinta tu propia macetita",
+   "color": "#7b4fb5",
+   "x": 38.5,
+   "z": -27.5
+  },
+  {
+   "id": "pmwjp2p0l",
+   "name": "Futbol tenis",
+   "desc": "",
+   "color": "#e2b445",
+   "x": 56,
+   "z": -66.5
+  },
+  {
+   "id": "pmwjp38y7",
+   "name": "Tejo",
+   "desc": "",
+   "color": "#e2b445",
+   "x": 32,
+   "z": -63.5
+  }
+ ],
+ "examples": false,
+ "areas": [
+  {
+   "id": "a-juegos",
+   "name": "Área de juegos",
+   "color": "#e2b445",
+   "points": [
+    [
+     86,
+     -58.5
+    ],
+    [
+     10.5,
+     -59.5
+    ],
+    [
+     9.5,
+     -28.5
+    ],
+    [
+     -31,
+     -29.5
+    ],
+    [
+     -30.5,
+     -103.5
+    ],
+    [
+     90,
+     -104.5
+    ]
+   ]
+  },
+  {
+   "id": "a-artistica",
+   "name": "Área artística",
+   "color": "#7b4fb5",
+   "points": [
+    [
+     50,
+     -58
+    ],
+    [
+     11.5,
+     -58.5
+    ],
+    [
+     10,
+     -22.5
+    ],
+    [
+     48,
+     -22.5
+    ]
+   ]
+  },
+  {
+   "id": "a-gourmet",
+   "name": "Área gourmet",
+   "color": "#e07a1f",
+   "points": [
+    [
+     47.5,
+     -21.5
+    ],
+    [
+     17.5,
+     -21.5
+    ],
+    [
+     17.5,
+     23.5
+    ],
+    [
+     45.5,
+     24.5
+    ]
+   ]
+  },
+  {
+   "id": "a-relax",
+   "name": "Área de relax",
+   "color": "#2f9e6b",
+   "points": [
+    [
+     87.5,
+     -57
+    ],
+    [
+     50.5,
+     -58.5
+    ],
+    [
+     46.5,
+     47
+    ],
+    [
+     78,
+     52.5
+    ]
+   ]
+  }
+ ],
+ "areasDraft": false,
+ "schedule": [
+  {
+   "t": "11:00",
+   "name": "Charla de Costelo y picada",
+   "group": "salon"
+  },
+  {
+   "t": "12:30",
+   "name": "Almuerzo",
+   "group": "salon"
+  },
+  {
+   "t": "14:00",
+   "end": "17:00",
+   "name": "Personalizados",
+   "group": "a-artistica",
+   "pin": "pmwb4pff3"
+  },
+  {
+   "t": "14:00",
+   "end": "17:00",
+   "name": "Fútbol burbuja",
+   "group": "a-juegos",
+   "pin": "pmwb4lulz"
+  },
+  {
+   "t": "14:00",
+   "end": "18:00",
+   "name": "Masajes",
+   "group": "a-relax",
+   "pin": "p7"
+  },
+  {
+   "t": "15:00",
+   "end": "18:00",
+   "name": "Arco y flecha",
+   "group": "a-juegos",
+   "pin": "p5"
+  },
+  {
+   "t": "15:00",
+   "end": "17:00",
+   "name": "Taller de sushi",
+   "group": "a-gourmet",
+   "pin": "pmwbe779b"
+  },
+  {
+   "t": "15:00",
+   "name": "Açaí",
+   "group": "comida"
+  },
+  {
+   "t": "17:00",
+   "end": "20:00",
+   "name": "Pintada de macetas",
+   "group": "a-artistica",
+   "pin": "pmwbe8r3l"
+  },
+  {
+   "t": "17:00",
+   "end": "20:00",
+   "name": "Tarot",
+   "group": "a-relax",
+   "pin": "p2"
+  },
+  {
+   "t": "17:00",
+   "end": "20:00",
+   "name": "Taller de bartender",
+   "group": "a-gourmet",
+   "pin": "pmwbe662u"
+  },
+  {
+   "t": "17:00",
+   "name": "Merienda",
+   "group": "comida"
+  },
+  {
+   "t": "18:00",
+   "end": "20:00",
+   "name": "Caballos",
+   "group": "a-juegos"
+  },
+  {
+   "t": "20:00",
+   "name": "Chivitruck y tequeños",
+   "group": "comida",
+   "pin": "p6"
+  },
+  {
+   "t": "21:30",
+   "name": "DJ Sanata",
+   "group": "salon"
+  },
+  {
+   "t": "23:00",
+   "name": "Baile",
+   "group": "salon",
+   "end": "01:30"
+  },
+  {
+   "t": "23:00",
+   "name": "Samba",
+   "group": "a-juegos",
+   "pin": "p8",
+   "open": true
+  },
+  {
+   "t": "01:30",
+   "name": "Panchitos",
+   "group": "comida"
+  }
+ ]
+}
