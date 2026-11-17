@@ -306,6 +306,14 @@ body.night .atime{color:#ffd35a}
 .tokenbox{display:grid;gap:8px}
 .tokenbox input{width:100%}
 .sitem{border-left:6px solid var(--c)}
+.gitem{border-left:6px solid #f7f6f1}
+.gitem.on{outline:3px solid #ffcd3c}
+.gname{font:400 11px/1.4 "Press Start 2P",monospace;color:var(--paper);align-self:center}
+.grot{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px}
+.grot em{font-style:normal;text-align:center;color:var(--paper);font:600 15px/1 var(--body)}
+.gbtns{display:flex!important;gap:6px;flex-wrap:wrap;margin-top:8px}
+.etabs{display:flex!important;flex-wrap:wrap;gap:4px}
+.etabs button{flex:1 0 auto}
 .srow{grid-template-columns:1fr auto!important}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sgrid label,.scheck{display:grid;gap:4px;font:600 13px/1.2 var(--body);color:var(--mist)}
@@ -1588,8 +1596,42 @@ function syncProps(){
   });
   Object.keys(propObjs).forEach(function(id){ if (!seen[id]){ scene.remove(propObjs[id].g); delete propObjs[id]; } });
 }
+/* ---------- gazebos blancos (sin pin ni cartel) ---------- */
+var gazObjs={}, GZ_WHITE=lam(0xf7f6f1), GZ_LEG=lam(0xd9dad6), GZ_SEL=lam(0xffcd3c);
+function gazSize(g){ var s=(g.size||"3x3").split("x").map(Number); return {w:s[0]||3, d:s[1]||3}; }
+function buildGazebo(g){
+  var S=gazSize(g), w=S.w, d=S.d, H=2.3, grp=new THREE.Group();
+  var roof=new THREE.Mesh(hipRoof(w+0.25, d+0.25, Math.min(w,d)*0.32), GZ_WHITE); roof.position.y=H; roof.castShadow=true; roof.receiveShadow=true; grp.add(roof);
+  /* faldón (valance) alrededor del techo */
+  var vt=0.05, vh=0.28;
+  [[w+0.25,vt,0,(d+0.25)/2],[w+0.25,vt,0,-(d+0.25)/2],[vt,d+0.25,(w+0.25)/2,0],[vt,d+0.25,-(w+0.25)/2,0]].forEach(function(v){
+    var m=new THREE.Mesh(new THREE.BoxGeometry(v[0],vh,v[1]), GZ_WHITE); m.position.set(v[2],H-vh/2,v[3]); m.castShadow=true; grp.add(m); });
+  /* patas: en las esquinas y cada ~3 m en los lados largos */
+  var legG=new THREE.CylinderGeometry(0.05,0.05,H,6), nx=Math.max(1,Math.round(w/3)), nz=Math.max(1,Math.round(d/3));
+  for (var i=0;i<=nx;i++) for (var j=0;j<=nz;j++){ if (i>0&&i<nx&&j>0&&j<nz) continue;
+    var l=new THREE.Mesh(legG, GZ_LEG); l.position.set(-w/2+i*w/nx, H/2, -d/2+j*d/nz); l.castShadow=true; grp.add(l); }
+  /* sombra suave en el piso para que se lea desde arriba */
+  var sh=new THREE.Mesh(new THREE.PlaneGeometry(w,d), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:.12, depthWrite:false}));
+  sh.rotation.x=-Math.PI/2; sh.position.y=0.03; grp.add(sh);
+  /* marco de selección (solo en edición) */
+  var sel=new THREE.Mesh(new THREE.RingGeometry(Math.max(w,d)*0.75, Math.max(w,d)*0.75+0.35, 32), new THREE.MeshBasicMaterial({color:0xffcd3c, transparent:true, opacity:.9, depthWrite:false}));
+  sel.rotation.x=-Math.PI/2; sel.position.y=0.06; sel.visible=false; grp.add(sel);
+  return {g:grp, key:w+"x"+d, sel:sel};
+}
+var selectedGaz=null;
+function syncGazebos(){
+  if (!STATE.gazebos) STATE.gazebos=[];
+  var seen={};
+  STATE.gazebos.forEach(function(g){
+    var o=gazObjs[g.id], S=gazSize(g);
+    if (!o || o.key!==S.w+"x"+S.d){ if (o) disposeGroup(o.g); o=gazObjs[g.id]=buildGazebo(g); scene.add(o.g); }
+    o.g.position.set(g.x,0,g.z); o.g.rotation.y=-(g.rot||0)*Math.PI/180; o.sel.visible=EDIT && selectedGaz===g.id; seen[g.id]=1;
+  });
+  Object.keys(gazObjs).forEach(function(id){ if (!seen[id]){ disposeGroup(gazObjs[id].g); delete gazObjs[id]; } });
+}
 function syncPins(){
   if (typeof syncAreaLabels==="function") syncAreaLabels();
+  syncGazebos();
   syncProps();
   var seen={};
   STATE.pins.forEach(function(p,i){
@@ -1866,6 +1908,44 @@ function renderSchedEditor(box){
   add.firstChild.addEventListener("click", function(){ var e={t:"12:00", name:"Nueva actividad", group:"salon"}; STATE.schedule.push(e); dirty(); renderList();
     var ins=[].slice.call(document.querySelectorAll(".sitem .s-name")).filter(function(i){ return i.value==="Nueva actividad"; }); if (ins.length){ var i=ins[ins.length-1]; i.scrollIntoView({block:"center"}); i.focus(); i.select(); } });
 }
+function renderGazEditor(box){
+  STATE.gazebos=STATE.gazebos||[];
+  var n=document.createElement("p"); n.className="note"; n.textContent="Gazebos blancos: aparecen en el mapa sin globo ni cartel. Tocá «+ Agregar gazebo» y después el lugar en el mapa.";
+  box.appendChild(n);
+  var ul=document.createElement("ul"); ul.className="alist";
+  STATE.gazebos.forEach(function(g, i){
+    var li=document.createElement("li"); li.className="eitem gitem"+(selectedGaz===g.id?" on":""); li.dataset.gid=g.id;
+    li.innerHTML='<div class="row srow"><b class="gname">Gazebo '+(i+1)+'</b><button class="btn small ghost" type="button" data-act="del">Borrar</button></div>'+
+      '<div class="sgrid"><label>Tamaño<select class="g-size"><option value="3x3">3 × 3 m</option><option value="3x4.5">3 × 4,5 m</option><option value="3x6">3 × 6 m</option><option value="4x4">4 × 4 m</option><option value="6x6">6 × 6 m</option></select></label>'+
+      '<label>Girar<span class="grot"><button class="btn small" type="button" data-r="-15">↺</button><em>'+(g.rot||0)+'°</em><button class="btn small" type="button" data-r="15">↻</button></span></label></div>'+
+      '<div class="row gbtns"><button class="btn small" type="button" data-act="move">Mover</button><button class="btn small" type="button" data-act="dup">Duplicar al lado</button><button class="btn small" type="button" data-act="go">Ver</button></div>';
+    var q=function(c){ return li.querySelector(c); };
+    q(".g-size").value=g.size||"3x3";
+    q(".g-size").addEventListener("change", function(ev){ g.size=ev.target.value; syncGazebos(); dirty(); });
+    li.querySelectorAll("[data-r]").forEach(function(b){ b.addEventListener("click", function(){ g.rot=(((g.rot||0)+Number(b.dataset.r))%360+360)%360; q("em").textContent=g.rot+"°"; syncGazebos(); dirty(); }); });
+    q('[data-act="move"]').addEventListener("click", function(){ selectGaz(g.id); startMove(g); });
+    q('[data-act="go"]').addEventListener("click", function(){ selectGaz(g.id, true); });
+    q('[data-act="dup"]').addEventListener("click", function(){
+      var S=gazSize(g), a=(g.rot||0)*Math.PI/180, off=S.w+0.3;
+      var c={id:"g"+Date.now().toString(36), x:Math.round((g.x+Math.cos(a)*off)*10)/10, z:Math.round((g.z+Math.sin(a)*off)*10)/10, rot:g.rot||0, size:g.size||"3x3"};
+      STATE.gazebos.splice(STATE.gazebos.indexOf(g)+1,0,c); selectedGaz=c.id; syncGazebos(); dirty(); renderList(); });
+    var del=q('[data-act="del"]');
+    del.addEventListener("click", function(){
+      if (!del.dataset.armed){ del.dataset.armed="1"; del.textContent="¿Borrar?"; del.classList.add("danger"); setTimeout(function(){ if(del.isConnected){ delete del.dataset.armed; del.textContent="Borrar"; del.classList.remove("danger"); } },3000); return; }
+      STATE.gazebos.splice(STATE.gazebos.indexOf(g),1); if (selectedGaz===g.id) selectedGaz=null; syncGazebos(); dirty(); renderList(); });
+    li.addEventListener("click", function(ev){ if (ev.target.closest("button,select")) return; selectGaz(g.id); });
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  var add=document.createElement("div"); add.className="tools"; add.innerHTML='<button class="btn" type="button">+ Agregar gazebo</button>'; box.appendChild(add);
+  add.firstChild.addEventListener("click", function(){ var g={id:"g"+Date.now().toString(36), x:0, z:0, rot:0, size:"3x3", __new:1}; startMove(g); });
+}
+function selectGaz(id, fly){
+  selectedGaz=id; syncGazebos();
+  document.querySelectorAll(".gitem").forEach(function(li){ li.classList.toggle("on", li.dataset.gid===id); });
+  var g=(STATE.gazebos||[]).filter(function(x){ return x.id===id; })[0];
+  if (g && fly){ if (MOBILE) setSheet(false); var dir=camera.position.clone().sub(controls.target); dir.setLength(MOBILE?70:50); flyTo(new THREE.Vector3(g.x,0,g.z), new THREE.Vector3(g.x,0,g.z).add(dir)); }
+}
 var TAB="lugares";
 function schedGroup(e){ var a=areaById(e.group); if (a) return {name:a.name, color:a.color}; return e.group==="comida" ? {name:"Comida", color:"#d9482b"} : {name:"Salón principal", color:"#2f7fbf"}; }
 function whenFor(p){ return (STATE.schedule||[]).filter(function(e){ return e.pin===p.id; }).map(function(e){ return e.end ? e.t+" a "+e.end : (e.open ? "Desde las "+e.t : e.t); }).join(" · "); }
@@ -1935,12 +2015,12 @@ function renderList(){
   }
   if (BACKEND==="artifact"){ var on=document.createElement("p"); on.className="note"; on.textContent="Ojo: lo que guardes acá no llega a la versión pública de GitHub Pages. Para el evento, editá desde diebas.github.io/summit-2026/#editar"; sc.appendChild(on); }
   var ET=document.createElement("div"); ET.className="tabs etabs"; ET.setAttribute("role","group"); ET.setAttribute("aria-label","Qué editar");
-  ET.innerHTML=[["pins","Atracciones"],["horarios","Horarios"],["areas","Áreas"],["general","General"]].map(function(t){ return '<button type="button" data-et="'+t[0]+'" aria-pressed="'+(ETAB===t[0])+'">'+t[1]+'</button>'; }).join("");
+  ET.innerHTML=[["pins","Atracciones"],["horarios","Horarios"],["gazebos","Gazebos"],["areas","Áreas"],["general","General"]].map(function(t){ return '<button type="button" data-et="'+t[0]+'" aria-pressed="'+(ETAB===t[0])+'">'+t[1]+'</button>'; }).join("");
   ET.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ ETAB=b.dataset.et; if (drawing) cancelDrawing(); renderList(); $("scroll").scrollTop=0; }); });
   sc.appendChild(ET);
   function sec(k){ var d=document.createElement("div"); d.className="esec"; d.hidden=ETAB!==k; sc.appendChild(d); return d; }
-  var secP=sec("pins"), secH=sec("horarios"), secA=sec("areas"), secG=sec("general");
-  renderSchedEditor(secH);
+  var secP=sec("pins"), secH=sec("horarios"), secZ=sec("gazebos"), secA=sec("areas"), secG=sec("general");
+  renderSchedEditor(secH); renderGazEditor(secZ);
   var wrap=document.createElement("div");
   wrap.innerHTML='<p class="note">'+(STATE.examples?'Estas atracciones son ejemplos: cambialas por las tuyas. ':'')+'Para mover una atracción, arrastrá su globo. Para agregar una, tocá «+ Agregar atracción» y después el lugar en el mapa. Para marcar un área, tocá «+ Nueva área» y marcá sus esquinas en el mapa. Nada cambia para los invitados hasta que guardes.</p>'+
    '<div class="field"><label for="f-title">Título</label><input type="text" id="f-title"></div>'+
@@ -2023,9 +2103,10 @@ function setStatus(t){ var s=$("status"); if (s) s.textContent=t; }
 function move(p, d){ var i=STATE.pins.indexOf(p), j=i+d; if (j<0||j>=STATE.pins.length) return; STATE.pins.splice(i,1); STATE.pins.splice(j,0,p); syncPins(); renderList(); dirty(); }
 var placing=false, movingPin=null, ETAB="pins";
 function startMove(p){
-  if (drawing) cancelDrawing(); setPlacing(false); movingPin=p; select(p.id,false); document.body.classList.add("placing");
+  if (drawing) cancelDrawing(); setPlacing(false); movingPin=p; if (!p.__gz && STATE.pins.indexOf(p)>=0) select(p.id,false); document.body.classList.add("placing");
   if (MOBILE) setSheet(false);
-  bar("Tocá el mapa donde va «"+(p.name||"la atracción")+"»", [{t:"Cancelar", p:1, f:stopMove}]);
+  var isG=String(p.id).charAt(0)==="g" && !("name" in p);
+  bar(isG ? (p.__new ? "Tocá el mapa donde va el gazebo" : "Tocá el lugar nuevo del gazebo") : "Tocá el mapa donde va «"+(p.name||"la atracción")+"»", [{t:"Cancelar", p:1, f:stopMove}]);
 }
 function stopMove(){ movingPin=null; document.body.classList.remove("placing"); bar(null); if (MOBILE && EDIT) setSheet(true); }
 function bar(text, buttons){
@@ -2050,6 +2131,7 @@ function placeAt(x,z){
 /* modo edición dentro de la página */
 var SAVED = JSON.stringify(STATE, cleanKeys), exitArmed=false;
 function setEdit(on){
+  if (!on) selectedGaz=null;
   EDIT=on; document.body.classList.toggle("edit",on); if (movingPin) stopMove(); if (drawing) cancelDrawing(); setPlacing(false); exitArmed=false; if (!on) selectedArea=null; syncAreas(); rebuildHandles();
   var b=$("edit-btn"); b.hidden = !(on||CAN_EDIT); b.textContent = on ? "Salir de edición" : "Editar mapa";
   if (on && $("panel").classList.contains("closed")) $("toggle").click();
@@ -2090,7 +2172,7 @@ function ghApi(method, body){
     .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok){ var e=new Error(j.message||("HTTP "+r.status)); e.status=r.status; throw e; } return j; }); });
 }
 function applyState(d){
-  STATE=d; delete STATE.scheduleRows; if (!STATE.areas) STATE.areas=[]; if (!STATE.schedule) STATE.schedule=[];
+  STATE=d; delete STATE.scheduleRows; if (!STATE.areas) STATE.areas=[]; if (!STATE.schedule) STATE.schedule=[]; if (!STATE.gazebos) STATE.gazebos=[];
   SAVED=JSON.stringify(STATE, cleanKeys); selected=null; selectedArea=null;
   renderHeader(); syncPins(); syncAreas(); LIVE.key=""; updateLive(); renderList();
 }
@@ -2124,7 +2206,7 @@ function pullData(){
   }).catch(function(){});
 }
 setInterval(pullData, 60000);
-window.__map={get state(){ return STATE; }, pullData:pullData, schedRows:schedRows, dirty:dirty};
+window.__map={get state(){ return STATE; }, pullData:pullData, schedRows:schedRows, dirty:dirty, syncPins:syncPins, renderList:renderList};
 document.addEventListener("visibilitychange", pullData);
 var artifactP=null;
 function getArtifact(){
@@ -2205,7 +2287,9 @@ renderer.domElement.addEventListener("pointerup", function(e){
   ray.setFromCamera(m, camera);
   if (ray.ray.intersectPlane(plane, hit)){
     if (drawing) addDrawPoint(hit.x, hit.z);
-    else if (movingPin){ var mp=movingPin; mp.x=Math.round(hit.x*2)/2; mp.z=Math.round(hit.z*2)/2; stopMove(); syncPins(); renderList(); dirty(); setStatus("«"+(mp.name||"Atracción")+"» movida. Acordate de publicar."); }
+    else if (movingPin){ var mp=movingPin, isG=!("name" in mp); mp.x=Math.round(hit.x*2)/2; mp.z=Math.round(hit.z*2)/2;
+      if (mp.__new){ delete mp.__new; STATE.gazebos=STATE.gazebos||[]; STATE.gazebos.push(mp); selectedGaz=mp.id; }
+      stopMove(); syncPins(); renderList(); dirty(); setStatus(isG ? "Gazebo colocado. Acordate de publicar." : "«"+(mp.name||"Atracción")+"» movida. Acordate de publicar."); }
     else placeAt(hit.x, hit.z); }
 });
 addEventListener("keydown", function(e){ if (e.key!=="Escape") return; if (movingPin) stopMove(); else if (drawing) cancelDrawing(); else if (placing){ setPlacing(false); setStatus(""); } });
