@@ -391,6 +391,15 @@ body.night .tabs button[aria-pressed=true]{background:#ff4fb3;color:#120c26}
 body.night .tabs{background:#05030d;border-color:#3a2a6a}
 body.night .item .when{color:#ffd35a}
 @media (max-width:720px){ .grp .aitem strong{font-size:9px} .tt .hr{font-size:8px} }
+/* horarios: los encabezados de zona quedan fijos al scrollear */
+@media (min-width:721px){ body.wide #scroll{display:flex;flex-direction:column;overflow:hidden} body.wide #scroll>*{flex:none} body.wide #scroll>.twrap{flex:1} }
+.twrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.twrap .tw{flex:1;min-height:0;overflow:auto}
+.tt thead th{position:sticky;top:0;z-index:4;background:#1b2b34}
+.tt thead .hr{z-index:5}
+body.night .tt thead th,body.night .tt .hr{background:#120c26}
+.afilter{position:sticky;top:-10px;z-index:4;background:#1b2b34;padding-top:14px;margin-top:-8px}
+body.night .afilter{background:#120c26}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -2130,7 +2139,7 @@ function placeNow(){
   var end=T[T.length-1]+60, cur=-1; for (var i=0;i<T.length;i++) if (now>=T[i]) cur=i;
   trs.forEach(function(tr,i){ tr.classList.toggle("past", cur>i || now>=end); tr.classList.toggle("now", cur===i && now<end); });
   if (cur<0 || now>=end){ line.hidden=true; return; }
-  var base=tw.getBoundingClientRect().top, a=trs[cur].getBoundingClientRect(), y0=a.top-base, y1=(cur+1<trs.length ? trs[cur+1].getBoundingClientRect().top-base : a.bottom-base);
+  var base=tw.getBoundingClientRect().top-tw.scrollTop, a=trs[cur].getBoundingClientRect(), y0=a.top-base, y1=(cur+1<trs.length ? trs[cur+1].getBoundingClientRect().top-base : a.bottom-base);
   var f=Math.min(1,(now-T[cur])/((cur+1<T.length?T[cur+1]:end)-T[cur]));
   line.hidden=false; line.style.top=(y0+(y1-y0)*f).toFixed(1)+"px"; line.style.width=tw.scrollWidth+"px";
   var hh=Math.floor(now/60)%24, mm=now%60; line.firstChild.textContent=(hh<10?"0":"")+hh+":"+(mm<10?"0":"")+mm;
@@ -2516,7 +2525,7 @@ function renderList(){
             if (e.group!==c) return ""; var a=ri(e.t), b=e.end?ri(e.end):(e.open?rows.length:a+1); if (r<a||r>=b) return "";
             return '<button type="button" class="chip" data-ev="'+ei+'" style="--c:'+esc(g.color)+'">'+esc(e.name)+'</button>'; }).join("")+'</td>'; }).join("")+'</tr>';
       });
-      var wrapT=document.createElement("div"); wrapT.innerHTML=h+'</tbody></table></div>'; sc.appendChild(wrapT);
+      var wrapT=document.createElement("div"); wrapT.className="twrap"; wrapT.innerHTML=h+'</tbody></table></div>'; sc.appendChild(wrapT);
       placeNow(); setTimeout(placeNow, 400);
       wrapT.querySelectorAll(".chip").forEach(function(b){ b.addEventListener("click", function(){
         var e=STATE.schedule[+b.dataset.ev], pin=e.pin && STATE.pins.filter(function(q){ return q.id===e.pin; })[0], area=areaById(e.group);
