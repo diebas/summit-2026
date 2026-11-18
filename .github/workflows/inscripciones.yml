@@ -1,0 +1,29 @@
+name: Inscripciones
+
+on:
+  push:
+    paths: ['inscripciones/**', 'index.html', '.github/workflows/inscripciones.yml']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  reglas-y-concurrencia:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: inscripciones/test } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: inscripciones/test/package-lock.json }
+      - run: npm ci
+        env: { PUPPETEER_SKIP_DOWNLOAD: '1' }
+      - run: npm test
+
+  pantalla:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: inscripciones/test } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: inscripciones/test/package-lock.json }
+      - run: npm ci
+      - run: npm run test:pantalla

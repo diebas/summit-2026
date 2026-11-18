@@ -142,7 +142,7 @@ begin
 end $$;
 
 -- núcleo de "anotarme" (lo usan invitados y admin)
-create function insc.anotar(p_email text, p_nombre text, p_turno text, p_admin boolean) returns jsonb language plpgsql as $$
+create function insc.anotar(p_email text, p_nombre text, p_turno text, p_admin boolean, p_token text default null) returns jsonb language plpgsql as $$
 declare e text := lower(trim(coalesce(p_email,''))); n text := nullif(trim(coalesce(p_nombre,'')),'');
         v_dom text := coalesce(insc.cfg('dominio'),'wyeworks.com');
         tu insc.turnos; ta insc.talleres; v_ocup int; v_est text; v_via text := case when p_admin then 'admin' else 'normal' end;
@@ -158,6 +158,19 @@ begin
   insert into insc.personas(email, nombre) values (e, coalesce(n, insc.nombre_de_mail(e)))
     on conflict (email) do update set nombre = coalesce(n, insc.personas.nombre);
   perform 1 from insc.personas where email = e for update;              -- serializa a la persona
+
+  -- reintento del mismo celular (misma clave): devolver la inscripción que ya existe, sin error
+  if p_token is not null then
+    if length(p_token) < 32 then return insc.err('token', 'Clave inválida.'); end if;
+    select id, estado into v_nid, v_est from insc.inscripciones
+     where token_hash = insc.sha(p_token) and email = e and turno_id = tu.id and estado <> 'baja';
+    if found then
+      select count(*) into v_pos from insc.inscripciones where turno_id = tu.id and estado = v_est
+         and creado <= (select creado from insc.inscripciones where id = v_nid);
+      return jsonb_build_object('ok', true, 'id', v_nid, 'token', p_token, 'estado', v_est, 'posicion', v_pos,
+                                'repetido', true, 'nombre', (select nombre from insc.personas where email = e));
+    end if;
+  end if;
 
   if not p_admin and insc.cerrado(ta, tu) then
     return insc.err('cerrado', case when ta.tipo = 'cola' then 'Ya terminó el horario.' else 'Este turno ya empezó.' end);
@@ -182,7 +195,7 @@ begin
     else return insc.err('lleno', 'No quedan lugares.'); end if;
   end if;
 
-  v_tok := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  v_tok := coalesce(p_token, replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''));
   insert into insc.inscripciones(taller_id, turno_id, email, estado, via, confirmado_en, token_hash)
     values (ta.id, tu.id, e, v_est, v_via, case when v_est = 'confirmado' then insc.ahora() end, insc.sha(v_tok))
     returning id into v_nid;
@@ -247,9 +260,10 @@ begin
   );
 end $$;
 
-create function public.insc_anotarme(p_email text, p_turno text, p_nombre text default null) returns jsonb
+-- p_token: clave que genera el celular antes de enviar; si el pedido se reintenta, la base reconoce la misma inscripción
+create function public.insc_anotarme(p_email text, p_turno text, p_nombre text default null, p_token text default null) returns jsonb
 language sql security definer set search_path = insc, public as
-$$ select insc.anotar(p_email, p_nombre, p_turno, false) $$;
+$$ select insc.anotar(p_email, p_nombre, p_turno, false, p_token) $$;
 
 create function public.insc_desanotarme(p_id uuid, p_token text) returns jsonb
 language sql security definer set search_path = insc, public as
@@ -285,9 +299,9 @@ end $$;
 -- ---------- permisos: el mapa solo puede ejecutar estas 4 funciones ----------
 revoke all on all tables    in schema insc from public, anon, authenticated;
 revoke all on all functions in schema insc from public, anon, authenticated;
-revoke all on function public.insc_estado(text), public.insc_anotarme(text,text,text),
+revoke all on function public.insc_estado(text), public.insc_anotarme(text,text,text,text),
                        public.insc_desanotarme(uuid,text), public.insc_admin(text,text,jsonb) from public;
-grant execute on function public.insc_estado(text), public.insc_anotarme(text,text,text),
+grant execute on function public.insc_estado(text), public.insc_anotarme(text,text,text,text),
                           public.insc_desanotarme(uuid,text), public.insc_admin(text,text,jsonb) to anon, authenticated;
 
 -- =====================================================================

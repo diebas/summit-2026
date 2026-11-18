@@ -1,0 +1,20 @@
+{
+  "name": "summit-2026-inscripciones-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 reglas.test.mjs concurrencia.test.mjs",
+    "test:reglas": "node --test reglas.test.mjs",
+    "test:carga": "node --test concurrencia.test.mjs",
+    "test:pantalla": "node --test pantalla.test.mjs",
+    "servidor": "node fake-supabase.mjs"
+  },
+  "dependencies": {
+    "embedded-postgres": "^17.5.0-beta.15",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^23.0.0",
+    "three": "0.128.0"
+  }
+}

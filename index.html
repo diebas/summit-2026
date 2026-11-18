@@ -2236,13 +2236,18 @@ function masajeHora(a, t, pos){ return addMin(t.inicio, Math.floor((pos-1)/(a.po
 function inscAnotar(turno){
   var yo=inscYo(); if (!yo){ INSC.form=true; inscFlash("Primero entrá con tu mail de WyeWorks.", "warn"); rerenderKeep(); var i=$("insc-mail"); if (i) i.focus(); return; }
   if (INSC.busy) return; INSC.busy=true; rerenderKeep();
-  rpc("insc_anotarme", {p_email:yo.email, p_turno:turno, p_nombre:yo.nombre}, 4).then(function(r){
-    if (!r.ok){ inscFlash(r.msg||"No se pudo anotar.", "err"); return; }
-    var o=inscLS(); o.mias.push({id:r.id, token:r.token, email:yo.email}); inscSave(o);
+  /* la clave la genera el celular ANTES de enviar: si la respuesta se pierde y se reintenta (o se vuelve a tocar),
+     la base reconoce la misma inscripción y el celular conserva la clave para poder bajarse */
+  var o0=inscLS(), pk=yo.email+"|"+turno; o0.pend=o0.pend||{}; var tok=o0.pend[pk]||(o0.pend[pk]=newTok()); inscSave(o0);
+  rpc("insc_anotarme", {p_email:yo.email, p_turno:turno, p_nombre:yo.nombre, p_token:tok}, 4).then(function(r){
+    var o=inscLS(); o.pend=o.pend||{}; delete o.pend[pk];
+    if (!r.ok){ inscSave(o); inscFlash(r.msg||"No se pudo anotar.", "err"); return; }
+    if (!o.mias.some(function(x){ return x.id===r.id; })) o.mias.push({id:r.id, token:tok, email:yo.email}); inscSave(o);
     inscFlash(r.estado==="confirmado" ? "¡Listo! Tenés tu lugar." : "Está lleno: quedaste en lista de espera (nº "+r.posicion+"). Si se libera un lugar, subís solo.", r.estado==="confirmado"?"ok":"warn");
   }).catch(function(e){ inscFlash("Sin conexión con el servidor ("+e.message+"). Probá de nuevo en un ratito.", "err"); })
   .then(function(){ INSC.busy=false; return inscRefresh(); });
 }
+function newTok(){ var a=new Uint8Array(32); (window.crypto||window.msCrypto).getRandomValues(a); return Array.prototype.map.call(a, function(b){ return (b<16?"0":"")+b.toString(16); }).join(""); }
 function inscDesanotar(id){
   var o=inscLS(), m=o.mias.filter(function(x){ return x.id===id; })[0]; if (!m || INSC.busy) return;
   INSC.busy=true; rerenderKeep();
