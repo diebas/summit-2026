@@ -313,3 +313,9 @@ insert into insc.turnos (id, taller_id, nombre, inicio, fin, cupo, orden) values
   ('bartender-b', 'bartender', 'Turno B', '18:00', '18:45', 15, 2),
   ('bartender-c', 'bartender', 'Turno C', '19:00', '19:45', 15, 3),
   ('masajes',     'masajes',   'Masajes', '14:00', '18:00', 32, 1);
+
+-- funciones internas con search_path fijo (recomendación del asesor de seguridad de Supabase)
+do $$ declare r record; begin
+  for r in select p.oid::regprocedure f from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='insc' loop
+    execute format('alter function %s set search_path = insc, public, pg_temp', r.f);
+  end loop; end $$;
