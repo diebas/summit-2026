@@ -307,6 +307,44 @@ body.night .atime{color:#ffd35a}
 .tokenbox input{width:100%}
 .sitem{border-left:6px solid var(--c)}
 .gitem{border-left:6px solid #f7f6f1}
+/* inscripciones */
+.insc{display:grid;gap:10px}
+.ins-msg{margin:0;padding:10px 12px;border:3px solid;font:600 15px/1.35 var(--body)}
+.ins-msg.ok{border-color:#3fbf7f;background:rgba(63,191,127,.16)}.ins-msg.warn{border-color:#ffcd3c;background:rgba(255,205,60,.14)}.ins-msg.err{border-color:#ff6b57;background:rgba(255,107,87,.16)}
+.ins-warn{border-left:4px solid #ffcd3c}
+.ins-sess{padding:12px;background:#0f2520;border:3px solid #3a5666;display:grid;gap:10px}
+.ins-hi{margin:0;font:500 15px/1.35 var(--body);color:var(--paper)}.ins-hi b{font-weight:700}.ins-hi span{display:block;color:var(--mist);font-size:13.5px;margin-top:2px;overflow-wrap:anywhere}
+.ins-login{display:grid;gap:8px}
+.ins-login input,.flabel input,.ia-alta input{width:100%;min-height:44px;padding:9px 10px;background:#0c151a;color:var(--paper);border:3px solid #3a5666;font:500 16px/1.2 var(--body);box-sizing:border-box}
+.ins-people{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{border:3px solid #3a5666;background:#0c151a;color:var(--paper);font:600 14px/1 var(--body);padding:8px 10px;cursor:pointer}
+.pchip.on{background:#ffcd3c;color:#0c151a;border-color:#ffcd3c}.pchip.add{border-style:dashed}
+.ins-mine{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ins-mine li{display:grid;gap:4px;padding:10px 12px;background:#14302a;border-left:6px solid #3fbf7f}
+.ins-mine li.espera{border-left-color:#ffcd3c}
+.ins-mine .st{font:600 12px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:#7fe0c2}.ins-mine li.espera .st{color:#ffcd3c}
+.ins-mine b{font:700 16px/1.2 var(--body)}.ins-mine .w{color:var(--mist);font-size:14px}
+.ins-mine .btn{justify-self:start;margin-top:4px}
+.ins-card{border:3px solid #3a5666;border-left:8px solid var(--c);background:#10241f;padding:12px;display:grid;gap:8px}
+.ins-card header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.ins-card header b{font:700 17px/1.2 var(--body)}
+.linkbtn{border:0;background:none;color:#7fe0c2;font:600 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:4px 0}
+.ins-rule{margin:0;color:var(--mist);font:500 13.5px/1.4 var(--body)}
+.ins-turno{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:2px dashed #2a4450}
+.ins-turno.closed{opacity:.55}
+.ins-turno .tl{display:block;font:700 15px/1.2 var(--body)}.ins-turno .cnt{display:block;color:var(--mist);font-size:13.5px;margin-top:3px}.ins-turno .cnt b{color:#ffcd3c}
+.ins-turno .btn{white-space:nowrap;min-height:40px}
+.ins-badge{font:600 12.5px/1.25 var(--body);color:var(--mist);text-align:right;max-width:52%}.ins-badge.ok{color:#7fe0c2}
+.ins-names summary{cursor:pointer;color:#7fe0c2;font:600 13.5px/1.3 var(--body);padding:2px 0}
+.ins-names ol{margin:6px 0 4px;padding-left:24px;columns:2;column-gap:14px;font:500 14px/1.45 var(--body);color:var(--paper)}
+.ins-names em{color:var(--mist);font-style:normal;font-size:12.5px}.ins-names .sub{margin:6px 0 0;color:#ffcd3c;font:600 12px/1 var(--body)}
+.insc-go{display:inline-block;margin-top:8px}
+.flabel{display:grid;gap:4px;font:600 13px/1.2 var(--body);color:var(--mist);margin:6px 0}
+.ins-admin{border:3px solid #3a5666;padding:8px 10px;margin:6px 0;background:#0f2520}
+.ins-admin summary{cursor:pointer;font:500 14px/1.3 var(--body)}
+.ins-admin ol{padding-left:22px;margin:8px 0}.ins-admin li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:4px 0;border-bottom:1px dashed #2a4450}
+.ins-admin li.espera span{color:#ffcd3c}.ins-admin small{color:var(--mist);overflow-wrap:anywhere}
+.ia-alta{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px}
+body.night .ins-card,body.night .ins-sess,body.night .ins-admin{background:#120c26;border-color:#3a2a6a}
 .gitem.on{outline:3px solid #ffcd3c}
 .gname{font:400 11px/1.4 "Press Start 2P",monospace;color:var(--paper);align-self:center}
 .grot{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px}
@@ -404,8 +442,8 @@ body.night .item .when{color:#ffd35a}
    "name": "Food trucks",
    "desc": "Las mejores sabores",
    "color": "#e07a1f",
-   "x": 37.5,
-   "z": 8
+   "x": 37,
+   "z": 15
   },
   {
    "id": "pmwb4pff3",
@@ -420,16 +458,16 @@ body.night .item .when{color:#ffd35a}
    "name": "Bartender",
    "desc": "Veni al mejor taller de tragos",
    "color": "#e07a1f",
-   "x": 38,
-   "z": -19
+   "x": 26.5,
+   "z": -18.5
   },
   {
    "id": "pmwbe779b",
    "name": "Sushi",
    "desc": "Aprende a hacer tu propio sushi",
    "color": "#e07a1f",
-   "x": 22.5,
-   "z": -2.5
+   "x": 27.5,
+   "z": -5
   },
   {
    "id": "pmwbe8r3l",
@@ -601,7 +639,7 @@ body.night .item .when{color:#ffd35a}
   },
   {
    "t": "15:00",
-   "end": "17:00",
+   "end": "18:00",
    "name": "Taller de sushi",
    "group": "a-gourmet",
    "pin": "pmwbe779b"
@@ -698,15 +736,15 @@ body.night .item .when{color:#ffd35a}
   },
   {
    "id": "gmwkpd4l4",
-   "x": 36.5,
-   "z": -10.5,
+   "x": 26.5,
+   "z": -1.5,
    "rot": 0,
    "size": "4x4"
   },
   {
    "id": "gmwkpd7mc",
-   "x": 32.5,
-   "z": -10,
+   "x": 21.5,
+   "z": -1.5,
    "rot": 0,
    "size": "4x4"
   }
@@ -2151,6 +2189,200 @@ function selectGaz(id, fly){
   var g=(STATE.gazebos||[]).filter(function(x){ return x.id===id; })[0];
   if (g && fly){ if (MOBILE) setSheet(false); var dir=camera.position.clone().sub(controls.target); dir.setLength(MOBILE?70:50); flyTo(new THREE.Vector3(g.x,0,g.z), new THREE.Vector3(g.x,0,g.z).add(dir)); }
 }
+/* ---------- inscripciones a talleres (Supabase) ---------- */
+var INSC={data:null, err:null, msg:null, busy:false, admin:null, adminErr:null, form:false};
+var INSC_LS="lascarretas-insc", INSC_ADMIN_LS="lascarretas-insc-admin";
+function inscOn(){ return !!(STATE.insc && STATE.insc.url && STATE.insc.key); }
+function inscLS(){ var o; try{ o=JSON.parse(localStorage.getItem(INSC_LS)); }catch(_){} o=o||{}; o.personas=o.personas||[]; o.mias=o.mias||[]; return o; }
+function inscSave(o){ try{ localStorage.setItem(INSC_LS, JSON.stringify(o)); }catch(_){} }
+function inscYo(){ var o=inscLS(); return o.personas.filter(function(p){ return p.email===o.activa; })[0]||null; }
+function inscDomain(){ return (INSC.data && INSC.data.dominio) || "wyeworks.com"; }
+function nameFromMail(e){ return e.split("@")[0].split(/[._-]+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase()+w.slice(1); }).join(" "); }
+function rpc(fn, args, tries){
+  tries = tries==null ? 3 : tries;
+  return fetch(STATE.insc.url.replace(/\/+$/,"")+"/rest/v1/rpc/"+fn, {method:"POST", cache:"no-store",
+      headers:{"apikey":STATE.insc.key, "Authorization":"Bearer "+STATE.insc.key, "Content-Type":"application/json"}, body:JSON.stringify(args||{})})
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){
+      if (!r.ok){ var e=new Error(j.message||("HTTP "+r.status)); e.status=r.status; throw e; } return j; }); })
+    .catch(function(e){ if (tries>1 && (!e.status || e.status>=500 || e.status===429)) return new Promise(function(res){ setTimeout(res, 700*(4-tries)+Math.random()*600); }).then(function(){ return rpc(fn,args,tries-1); }); throw e; });
+}
+function inscRefresh(){
+  if (!inscOn()) return Promise.resolve();
+  if (INSC.loading){ INSC.again=true; return Promise.resolve(); } INSC.loading=true;
+  var yo=inscYo();
+  return rpc("insc_estado", {p_email: yo?yo.email:null}).then(function(d){ INSC.data=d; INSC.err=null; })
+    .catch(function(e){ INSC.err=e.message; })
+    .then(function(){ INSC.loading=false; if (INSC.again){ INSC.again=false; return inscRefresh(); } if (!EDIT && TAB==="anotarme") rerenderKeep(); if (EDIT && ETAB==="insc") rerenderKeep(); });
+}
+function rerenderKeep(){ var sc=$("scroll"), k=sc.scrollTop, a=document.activeElement, id=a&&a.id, v=a&&a.value; renderList(); sc.scrollTop=k; if (id && $(id)){ $(id).value=v; $(id).focus(); } }
+setInterval(function(){ if (document.visibilityState!=="hidden" && ((!EDIT && TAB==="anotarme") || (EDIT && ETAB==="insc")) && !INSC.busy) inscRefresh(); }, 20000);
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState==="visible" && !EDIT && TAB==="anotarme") inscRefresh(); });
+function tallerDePin(id){ return INSC.data && INSC.data.talleres.filter(function(t){ return t.pin===id; })[0]; }
+function inscFlash(text, kind){ INSC.msg={text:text, kind:kind||"ok", t:Date.now()}; }
+function addMin(hhmm, m){ var p=hhmm.split(":"), t=(+p[0])*60+(+p[1])+m; t=((t%1440)+1440)%1440; return (t<600?"0":"")+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60); }
+function inscFind(id){ var r=null; (INSC.data?INSC.data.talleres:[]).forEach(function(a){ a.turnos.forEach(function(t){
+  t.confirmados.forEach(function(x,i){ if (x.id===id) r={taller:a, turno:t, estado:"confirmado", pos:i+1}; });
+  t.espera.forEach(function(x,i){ if (x.id===id) r={taller:a, turno:t, estado:"espera", pos:i+1}; }); }); }); return r; }
+function masajeHora(a, t, pos){ return addMin(t.inicio, Math.floor((pos-1)/(a.por_slot||1))*(a.slot_min||15)); }
+
+function inscAnotar(turno){
+  var yo=inscYo(); if (!yo){ INSC.form=true; inscFlash("Primero entrá con tu mail de WyeWorks.", "warn"); rerenderKeep(); var i=$("insc-mail"); if (i) i.focus(); return; }
+  if (INSC.busy) return; INSC.busy=true; rerenderKeep();
+  rpc("insc_anotarme", {p_email:yo.email, p_turno:turno, p_nombre:yo.nombre}, 4).then(function(r){
+    if (!r.ok){ inscFlash(r.msg||"No se pudo anotar.", "err"); return; }
+    var o=inscLS(); o.mias.push({id:r.id, token:r.token, email:yo.email}); inscSave(o);
+    inscFlash(r.estado==="confirmado" ? "¡Listo! Tenés tu lugar." : "Está lleno: quedaste en lista de espera (nº "+r.posicion+"). Si se libera un lugar, subís solo.", r.estado==="confirmado"?"ok":"warn");
+  }).catch(function(e){ inscFlash("Sin conexión con el servidor ("+e.message+"). Probá de nuevo en un ratito.", "err"); })
+  .then(function(){ INSC.busy=false; return inscRefresh(); });
+}
+function inscDesanotar(id){
+  var o=inscLS(), m=o.mias.filter(function(x){ return x.id===id; })[0]; if (!m || INSC.busy) return;
+  INSC.busy=true; rerenderKeep();
+  rpc("insc_desanotarme", {p_id:id, p_token:m.token}, 4).then(function(r){
+    if (!r.ok){ inscFlash(r.msg, "err"); return; }
+    o=inscLS(); o.mias=o.mias.filter(function(x){ return x.id!==id; }); inscSave(o); inscFlash("Listo, te desanotaste.", "ok");
+  }).catch(function(e){ inscFlash("Sin conexión con el servidor ("+e.message+").", "err"); })
+  .then(function(){ INSC.busy=false; return inscRefresh(); });
+}
+function armed(btn, label, fn){ btn.addEventListener("click", function(){
+  if (!btn.dataset.armed){ btn.dataset.armed="1"; var t=btn.textContent; btn.textContent=label; btn.classList.add("danger"); setTimeout(function(){ if (btn.isConnected){ delete btn.dataset.armed; btn.textContent=t; btn.classList.remove("danger"); } },3500); return; }
+  fn(); }); }
+
+function renderInsc(sc){
+  var box=document.createElement("div"); box.className="insc"; sc.appendChild(box);
+  var d=INSC.data, yo=inscYo(), o=inscLS();
+  if (d && yo && (!d.yo || d.yo.email!==yo.email)){ d=null; INSC.err=null; }   /* datos de otra persona: esperar los nuevos */
+  if (!d){
+    box.innerHTML='<p class="note">'+(INSC.err ? 'No me pude conectar con las inscripciones ('+esc(INSC.err)+'). <button class="btn small" type="button" id="insc-retry">Reintentar</button>' : 'Cargando las listas…')+'</p>';
+    if ($("insc-retry")) $("insc-retry").addEventListener("click", inscRefresh);
+    if (!INSC.err) inscRefresh();
+    return;
+  }
+  var h='';
+  if (d.simulado) h+='<p class="note ins-warn">Modo ensayo: la hora del servidor está simulada.</p>';
+  if (INSC.msg && Date.now()-INSC.msg.t<15000) h+='<p class="ins-msg '+INSC.msg.kind+'" role="status">'+esc(INSC.msg.text)+'</p>';
+  /* sesión */
+  h+='<div class="ins-sess">';
+  if (yo && !INSC.form){
+    h+='<p class="ins-hi">Hola, <b>'+esc(yo.nombre)+'</b><span>'+esc(yo.email)+'</span></p>';
+    h+='<div class="ins-people">'+o.personas.map(function(p){ return '<button type="button" class="pchip'+(p.email===yo.email?' on':'')+'" data-p="'+esc(p.email)+'">'+esc(p.nombre.split(" ")[0])+'</button>'; }).join("")+
+       '<button type="button" class="pchip add" id="insc-add">+ Otra persona</button><button type="button" class="pchip" id="insc-out">Salir</button></div>';
+  } else {
+    h+='<p class="ins-hi"><b>Entrá con tu mail de WyeWorks</b><span>para anotarte o ver tus inscripciones. Si no tenés datos, podés usar el celular de un compañero.</span></p>'+
+       '<form id="insc-login" class="ins-login" novalidate><input type="email" id="insc-mail" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="nombre@'+esc(inscDomain())+'" aria-label="Tu mail de WyeWorks">'+
+       '<input type="text" id="insc-name" autocomplete="name" placeholder="Nombre y apellido" aria-label="Nombre y apellido">'+
+       '<button class="btn primary" type="submit">Entrar</button>'+(o.personas.length?'<button class="btn small ghost" type="button" id="insc-cancel">Volver</button>':'')+'</form>';
+  }
+  h+='</div>';
+  /* mis inscripciones */
+  var mine = (d.yo && d.yo.inscripciones) || [];
+  if (yo && mine.length){
+    h+='<p class="sec">Mis inscripciones</p><ul class="ins-mine">';
+    mine.forEach(function(m){ var f=inscFind(m.id); if (!f) return; var a=f.taller, t=f.turno, tok=o.mias.some(function(x){ return x.id===m.id; });
+      var when = a.tipo==="cola" ? (f.estado==="confirmado" ? "Sos el nº "+f.pos+" · aprox. "+masajeHora(a,t,f.pos)+" (tentativo)" : "") : t.nombre+" · "+t.inicio+"–"+t.fin;
+      h+='<li class="'+f.estado+'"><span class="st">'+(f.estado==="confirmado"?"✓ Confirmado":"En espera · nº "+f.pos)+'</span><b>'+esc(a.nombre)+'</b><span class="w">'+esc(when)+(m.via==="excepcion"?" · por lugar libre":"")+'</span>'+
+         (t.cerrado ? '' : tok ? '<button class="btn small ghost" type="button" data-baja="'+esc(m.id)+'">Desanotarme</button>' : '<span class="w">Te anotaste desde otro celular: para bajarte, pedíselo a la organización.</span>')+'</li>'; });
+    h+='</ul>';
+  }
+  /* talleres */
+  d.talleres.forEach(function(a){
+    var myIn = mine.filter(function(m){ return m.taller===a.id; })[0];
+    var myOther = a.grupo && mine.filter(function(m){ return m.estado==="confirmado" && m.taller!==a.id && d.talleres.some(function(b){ return b.id===m.taller && b.grupo===a.grupo; }); })[0];
+    var pin=STATE.pins.filter(function(p){ return p.id===a.pin; })[0];
+    h+='<section class="ins-card" style="--c:'+esc(pin?pin.color:"#e2b445")+'"><header><b>'+esc(a.nombre)+'</b>'+(pin?'<button type="button" class="linkbtn" data-pin="'+esc(pin.id)+'">Ver en el mapa</button>':'')+'</header>';
+    if (a.grupo){ var others=d.talleres.filter(function(b){ return b.grupo===a.grupo && b.id!==a.id; }).map(function(b){ return b.nombre.replace(/^Taller de /,""); }); if (others.length) h+='<p class="ins-rule">Si te anotás acá no podés anotarte en '+esc(others.join(" ni "))+'. Media hora antes de cada turno se libera para todos si quedan lugares.</p>'; }
+    if (a.tipo==="cola") h+='<p class="ins-rule">Turnos de '+(a.slot_min||15)+' min de a '+(a.por_slot||1)+' personas, por orden de anotación. <b>El horario es tentativo:</b> estate atento cuando se acerque tu turno.</p>';
+    a.turnos.forEach(function(t){
+      var n=t.confirmados.length, free=Math.max(0,t.cupo-n), mineHere = myIn && myIn.turno===t.id;
+      var btn='';
+      if (mineHere) btn='<span class="ins-badge ok">'+(myIn.estado==="confirmado"?"✓ Estás anotado/a":"Estás en espera")+'</span>';
+      else if (t.cerrado) btn='<span class="ins-badge">Cerrado</span>';
+      else if (myIn) btn='';
+      else if (myOther && !t.desbloqueado) btn='<span class="ins-badge">Se libera a las '+esc(t.desbloqueo||"—")+' si quedan lugares</span>';
+      else if (myOther && free===0) btn='<span class="ins-badge">Lleno</span>';
+      else btn='<button class="btn small'+(free?' primary':'')+'" type="button" data-turno="'+esc(t.id)+'"'+(INSC.busy?' disabled':'')+'>'+(free?'Anotarme':(a.espera?'Anotarme en espera':'Lleno'))+'</button>';
+      var label = a.tipo==="cola" ? 'Desde las '+t.inicio : esc(t.nombre)+' · '+t.inicio+'–'+t.fin;
+      var cnt = free ? 'Quedan <b>'+free+'</b> de '+t.cupo : 'Lleno'+(t.espera.length?' · '+t.espera.length+' en espera':'');
+      h+='<div class="ins-turno'+(t.cerrado?' closed':'')+'"><div><span class="tl">'+label+'</span><span class="cnt">'+cnt+'</span></div>'+btn+'</div>';
+      if (n || t.espera.length){
+        h+='<details class="ins-names"><summary>Ver anotados ('+n+(t.espera.length?' + '+t.espera.length+' en espera':'')+')</summary><ol>'+
+          t.confirmados.map(function(x,i){ return '<li>'+esc(x.nombre)+(a.tipo==="cola"?' <em>~'+masajeHora(a,t,i+1)+'</em>':'')+'</li>'; }).join("")+'</ol>'+
+          (t.espera.length?'<p class="sub">En espera</p><ol>'+t.espera.map(function(x){ return '<li>'+esc(x.nombre)+'</li>'; }).join("")+'</ol>':'')+'</details>';
+      }
+    });
+    h+='</section>';
+  });
+  if (!d.fecha) h+='<p class="note">Los horarios de apertura y cierre se activan cuando la organización cargue la fecha del evento.</p>';
+  box.innerHTML=h;
+  /* eventos */
+  box.querySelectorAll("[data-turno]").forEach(function(b){ b.addEventListener("click", function(){ inscAnotar(b.dataset.turno); }); });
+  box.querySelectorAll("[data-baja]").forEach(function(b){ armed(b, "¿Seguro? Tocá de nuevo", function(){ inscDesanotar(b.dataset.baja); }); });
+  box.querySelectorAll("[data-pin]").forEach(function(b){ b.addEventListener("click", function(){ select(b.dataset.pin, true); if (MOBILE) setSheet(false); }); });
+  box.querySelectorAll("[data-p]").forEach(function(b){ b.addEventListener("click", function(){ var o=inscLS(); o.activa=b.dataset.p; inscSave(o); INSC.data=null; inscRefresh(); rerenderKeep(); }); });
+  if ($("insc-add")) $("insc-add").addEventListener("click", function(){ INSC.form=true; rerenderKeep(); $("insc-mail").focus(); });
+  if ($("insc-cancel")) $("insc-cancel").addEventListener("click", function(){ INSC.form=false; rerenderKeep(); });
+  if ($("insc-out")) $("insc-out").addEventListener("click", function(){ var o=inscLS(); o.personas=o.personas.filter(function(p){ return p.email!==o.activa; }); o.activa=o.personas.length?o.personas[0].email:null; inscSave(o); inscRefresh(); rerenderKeep(); });
+  var mail=$("insc-mail"), nm=$("insc-name");
+  if (mail){ mail.addEventListener("input", function(){ var v=mail.value.trim().toLowerCase(); if (!nm.dataset.touched) nm.value = /@/.test(v) ? nameFromMail(v) : ""; });
+    nm.addEventListener("input", function(){ nm.dataset.touched="1"; }); }
+  if ($("insc-login")) $("insc-login").addEventListener("submit", function(ev){ ev.preventDefault();
+    var v=mail.value.trim().toLowerCase(), dom=inscDomain();
+    if (!/^[a-z0-9._%+-]+@/.test(v) || v.split("@")[1]!==dom){ inscFlash("Tiene que ser tu mail @"+dom+".", "err"); rerenderKeep(); $("insc-mail").value=v; return; }
+    var name=(nm.value.trim()||nameFromMail(v)).slice(0,60), o=inscLS();
+    o.personas=o.personas.filter(function(p){ return p.email!==v; }); o.personas.push({email:v, nombre:name}); o.activa=v; inscSave(o);
+    INSC.form=false; INSC.msg=null; inscRefresh(); rerenderKeep(); });
+}
+
+/* panel de la organización (en el editor) */
+function inscAdminKey(){ try{ return localStorage.getItem(INSC_ADMIN_LS)||""; }catch(_){ return ""; } }
+function inscAdmin(accion, args){ return rpc("insc_admin", {p_key:inscAdminKey(), p_accion:accion, p_args:args||{}}); }
+function inscAdminLoad(){ if (!inscOn() || !inscAdminKey()) return Promise.resolve();
+  return Promise.all([inscAdmin("lista"), rpc("insc_estado",{})]).then(function(r){ if (!r[0].ok){ INSC.adminErr=r[0].msg; INSC.admin=null; } else { INSC.admin=r[0].inscripciones; INSC.adminErr=null; } INSC.data=r[1]; })
+   .catch(function(e){ INSC.adminErr=e.message; }).then(function(){ if (EDIT && ETAB==="insc") rerenderKeep(); }); }
+function renderInscAdmin(box){
+  STATE.insc=STATE.insc||{url:"", key:""};
+  var h='<p class="note">Conexión con Supabase (Project URL y la clave pública «anon»). Se publican con el mapa para que los invitados puedan anotarse.</p>'+
+    '<label class="flabel">Project URL<input type="url" id="ia-url" placeholder="https://xxxx.supabase.co"></label>'+
+    '<label class="flabel">Clave anon (pública)<input type="text" id="ia-key" autocomplete="off" placeholder="eyJ…"></label>'+
+    '<label class="flabel">Clave de administración (solo queda en este celular)<input type="password" id="ia-admin" autocomplete="off" placeholder="wye-…"></label>'+
+    '<div class="tools"><button class="btn" type="button" id="ia-connect">Conectar</button></div>';
+  if (inscAdminKey() && inscOn()){
+    if (INSC.adminErr) h+='<p class="ins-msg err">'+esc(INSC.adminErr)+'</p>';
+    var d=INSC.data;
+    if (d){
+      h+='<p class="sec">Fecha y hora</p><div class="sgrid"><label>Fecha del evento<input type="date" id="ia-fecha" value="'+esc(d.fecha||"")+'"></label><label>Simular hora (ensayo)<input type="datetime-local" id="ia-ahora"></label></div>'+
+         '<div class="tools"><button class="btn small" type="button" id="ia-save-fecha">Guardar fecha</button><button class="btn small" type="button" id="ia-sim">Simular</button><button class="btn small ghost" type="button" id="ia-real">Volver a la hora real</button></div>'+
+         (d.simulado?'<p class="ins-msg warn">Hay una hora simulada ('+esc(new Date(d.ahora).toLocaleString("es-UY",{timeZone:"America/Montevideo"}))+'). Acordate de volver a la hora real antes del evento.</p>':'')+
+         (!d.fecha?'<p class="ins-msg warn">Falta la fecha: sin ella los turnos no se cierran ni se libera la media hora antes.</p>':'');
+      h+='<p class="sec">Listas</p><div class="tools"><button class="btn small" type="button" id="ia-reload">Actualizar</button></div>';
+      var all=INSC.admin||[];
+      d.talleres.forEach(function(a){ a.turnos.forEach(function(t){
+        var rows=all.filter(function(x){ return x.turno===t.id && x.estado!=="baja"; });
+        h+='<details class="ins-admin"><summary><b>'+esc(a.nombre)+'</b> · '+(a.tipo==="cola"?"":esc(t.nombre)+' '+t.inicio+' · ')+rows.filter(function(x){return x.estado==="confirmado";}).length+'/'+t.cupo+(rows.some(function(x){return x.estado==="espera";})?' · '+rows.filter(function(x){return x.estado==="espera";}).length+' en espera':'')+'</summary><ol>'+
+          rows.map(function(x){ return '<li class="'+x.estado+'"><span>'+esc(x.nombre)+' <small>'+esc(x.email)+(x.estado==="espera"?' · espera':'')+(x.via!=="normal"?' · '+esc(x.via):'')+'</small></span><button class="btn small ghost" type="button" data-abaja="'+esc(x.id)+'">Dar de baja</button></li>'; }).join("")+'</ol>'+
+          '<form class="ia-alta" data-turno="'+esc(t.id)+'"><input type="email" placeholder="mail@'+esc(d.dominio)+'" aria-label="Mail"><button class="btn small" type="submit">+ Anotar (sin reglas)</button></form></details>';
+      }); });
+      h+='<p class="sec">Después del ensayo</p><div class="tools"><button class="btn small ghost" type="button" id="ia-reset">Borrar todas las inscripciones</button></div>';
+    } else h+='<p class="note">Cargando…</p>';
+  }
+  box.innerHTML=h;
+  $("ia-url").value=STATE.insc.url||""; $("ia-key").value=STATE.insc.key||""; $("ia-admin").value=inscAdminKey();
+  $("ia-url").addEventListener("change", function(e){ STATE.insc.url=e.target.value.trim(); dirty(); });
+  $("ia-key").addEventListener("change", function(e){ STATE.insc.key=e.target.value.trim(); dirty(); });
+  $("ia-connect").addEventListener("click", function(){ STATE.insc.url=$("ia-url").value.trim(); STATE.insc.key=$("ia-key").value.trim(); dirty();
+    try{ localStorage.setItem(INSC_ADMIN_LS, $("ia-admin").value.trim()); }catch(_){}
+    setStatus("Conectando…"); inscAdminLoad().then(function(){ setStatus(INSC.adminErr ? "No conecta: "+INSC.adminErr : "Conectado. Publicá el mapa para que los invitados vean «Anotarme»."); }); });
+  function act(p, okMsg){ setStatus("…"); return p.then(function(r){ setStatus(r.ok ? okMsg : r.msg); return inscAdminLoad(); }).catch(function(e){ setStatus("Error: "+e.message); }); }
+  if ($("ia-save-fecha")) $("ia-save-fecha").addEventListener("click", function(){ act(inscAdmin("config",{fecha:$("ia-fecha").value}), "Fecha guardada."); });
+  if ($("ia-sim")) $("ia-sim").addEventListener("click", function(){ var v=$("ia-ahora").value; if (!v) return; act(inscAdmin("config",{ahora:v.replace("T"," ")+":00-03"}), "Hora simulada."); });
+  if ($("ia-real")) $("ia-real").addEventListener("click", function(){ act(inscAdmin("config",{ahora:""}), "Hora real."); });
+  if ($("ia-reload")) $("ia-reload").addEventListener("click", function(){ inscAdminLoad(); });
+  box.querySelectorAll("[data-abaja]").forEach(function(b){ armed(b, "¿Dar de baja?", function(){ act(inscAdmin("baja",{id:b.dataset.abaja}), "Dado de baja."); }); });
+  box.querySelectorAll(".ia-alta").forEach(function(f){ f.addEventListener("submit", function(ev){ ev.preventDefault(); var v=f.querySelector("input").value.trim(); if (!v) return; act(inscAdmin("alta",{email:v, turno:f.dataset.turno}), "Anotado."); }); });
+  if ($("ia-reset")) armed($("ia-reset"), "¿Borrar TODO? Tocá de nuevo", function(){ act(inscAdmin("reiniciar"), "Inscripciones borradas."); });
+  if (!INSC.admin && !INSC.adminErr && inscAdminKey() && inscOn()) inscAdminLoad();
+}
+
 var TAB="lugares";
 function schedGroup(e){ var a=areaById(e.group); if (a) return {name:a.name, color:a.color}; return e.group==="comida" ? {name:"Comida", color:"#d9482b"} : {name:"Salón principal", color:"#2f7fbf"}; }
 function whenFor(p){ return (STATE.schedule||[]).filter(function(e){ return e.pin===p.id; }).map(function(e){ return e.end ? e.t+" a "+e.end : (e.open ? "Desde las "+e.t : e.t); }).join(" · "); }
@@ -2159,12 +2391,14 @@ function renderList(){
   document.body.classList.toggle("wide", !EDIT && TAB==="horarios" && (STATE.schedule||[]).length>0);
   if (!EDIT){
     var hasSched=(STATE.schedule||[]).length>0;
-    if (hasSched){
+    if (hasSched || inscOn()){
       var tabs=document.createElement("div"); tabs.className="tabs"; tabs.setAttribute("role","group"); tabs.setAttribute("aria-label","Qué ver");
-      tabs.innerHTML='<button type="button" data-tab="lugares" aria-pressed="'+(TAB==="lugares")+'">Lugares</button><button type="button" data-tab="horarios" aria-pressed="'+(TAB==="horarios")+'">Horarios</button>';
+      tabs.innerHTML='<button type="button" data-tab="lugares" aria-pressed="'+(TAB==="lugares")+'">Lugares</button>'+(hasSched?'<button type="button" data-tab="horarios" aria-pressed="'+(TAB==="horarios")+'">Horarios</button>':'')+
+        (inscOn()?'<button type="button" data-tab="anotarme" aria-pressed="'+(TAB==="anotarme")+'">Anotarme</button>':'');
       tabs.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ TAB=b.dataset.tab; renderList(); $("scroll").scrollTop=0; resize(); }); });
       sc.appendChild(tabs);
     }
+    if (TAB==="anotarme" && inscOn()){ renderInsc(sc); return; }
     if (hasSched && TAB==="horarios" && W<=720){ renderAgenda(sc); return; }
     if (hasSched && TAB==="horarios"){
       /* tabla: una fila por hora y una columna por zona */
@@ -2220,12 +2454,12 @@ function renderList(){
   }
   if (BACKEND==="artifact"){ var on=document.createElement("p"); on.className="note"; on.textContent="Ojo: lo que guardes acá no llega a la versión pública de GitHub Pages. Para el evento, editá desde diebas.github.io/summit-2026/#editar"; sc.appendChild(on); }
   var ET=document.createElement("div"); ET.className="tabs etabs"; ET.setAttribute("role","group"); ET.setAttribute("aria-label","Qué editar");
-  ET.innerHTML=[["pins","Atracciones"],["horarios","Horarios"],["gazebos","Gazebos"],["areas","Áreas"],["general","General"]].map(function(t){ return '<button type="button" data-et="'+t[0]+'" aria-pressed="'+(ETAB===t[0])+'">'+t[1]+'</button>'; }).join("");
+  ET.innerHTML=[["pins","Atracciones"],["horarios","Horarios"],["gazebos","Gazebos"],["areas","Áreas"],["insc","Inscripciones"],["general","General"]].map(function(t){ return '<button type="button" data-et="'+t[0]+'" aria-pressed="'+(ETAB===t[0])+'">'+t[1]+'</button>'; }).join("");
   ET.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){ ETAB=b.dataset.et; if (drawing) cancelDrawing(); renderList(); $("scroll").scrollTop=0; }); });
   sc.appendChild(ET);
   function sec(k){ var d=document.createElement("div"); d.className="esec"; d.hidden=ETAB!==k; sc.appendChild(d); return d; }
-  var secP=sec("pins"), secH=sec("horarios"), secZ=sec("gazebos"), secA=sec("areas"), secG=sec("general");
-  renderSchedEditor(secH); renderGazEditor(secZ);
+  var secP=sec("pins"), secH=sec("horarios"), secZ=sec("gazebos"), secA=sec("areas"), secI=sec("insc"), secG=sec("general");
+  renderSchedEditor(secH); renderGazEditor(secZ); if (ETAB==="insc") renderInscAdmin(secI);
   var wrap=document.createElement("div");
   wrap.innerHTML='<p class="note">'+(STATE.examples?'Estas atracciones son ejemplos: cambialas por las tuyas. ':'')+'Para mover una atracción, arrastrá su globo. Para agregar una, tocá «+ Agregar atracción» y después el lugar en el mapa. Para marcar un área, tocá «+ Nueva área» y marcá sus esquinas en el mapa. Nada cambia para los invitados hasta que guardes.</p>'+
    '<div class="field"><label for="f-title">Título</label><input type="text" id="f-title"></div>'+
@@ -2380,6 +2614,7 @@ function applyState(d){
   STATE=d; delete STATE.scheduleRows; if (!STATE.areas) STATE.areas=[]; if (!STATE.schedule) STATE.schedule=[]; if (!STATE.gazebos) STATE.gazebos=[];
   SAVED=JSON.stringify(STATE, cleanKeys); selected=null; selectedArea=null;
   renderHeader(); syncPins(); syncAreas(); LIVE.key=""; updateLive(); renderList();
+  if (inscOn() && !INSC.data) inscRefresh();
 }
 function ghEnterEdit(){
   if (!EDIT) setEdit(true); else renderList();
@@ -2467,10 +2702,13 @@ function showCard(html){
   var c=$("selcard"); if (!html){ c.hidden=true; c.innerHTML=""; resize(); return; }
   c.innerHTML=html+'<button class="x" type="button" aria-label="Cerrar">×</button>'; c.hidden=false;
   c.querySelector(".x").addEventListener("click", function(){ selected=null; selectedArea=null; syncPins(); syncAreas(); showCard(null); });
+  var ig=c.querySelector("[data-insc]"); if (ig) ig.addEventListener("click", function(){ TAB="anotarme"; showCard(null); setSheet(true); renderList(); $("scroll").scrollTop=0; resize(); });
   resize();
 }
 function cardForPin(p){
-  var h=cardForPinBase(p); return LIVE.pins[p.id] ? h.replace('</strong>',' <em class="nowbadge">Ahora</em></strong>') : h;
+  var h=cardForPinBase(p); if (LIVE.pins[p.id]) h=h.replace('</strong>',' <em class="nowbadge">Ahora</em></strong>');
+  if (inscOn() && (tallerDePin(p.id) || /sushi|bartender|masaj/i.test(p.name||""))) h=h.replace(/<\/span>$/, '<button type="button" class="btn small primary insc-go" data-insc="1">Anotarme</button></span>');
+  return h;
 }
 function cardForPinBase(p){
   var i=STATE.pins.indexOf(p), inArea=STATE.areas.filter(function(a){ return a.points.length>=3 && inPoly(p.x,p.z,a.points); })[0];

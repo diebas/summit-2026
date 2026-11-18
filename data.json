@@ -47,8 +47,8 @@
    "name": "Food trucks",
    "desc": "Las mejores sabores",
    "color": "#e07a1f",
-   "x": 37.5,
-   "z": 8
+   "x": 37,
+   "z": 15
   },
   {
    "id": "pmwb4pff3",
@@ -63,16 +63,16 @@
    "name": "Bartender",
    "desc": "Veni al mejor taller de tragos",
    "color": "#e07a1f",
-   "x": 38,
-   "z": -19
+   "x": 26.5,
+   "z": -18.5
   },
   {
    "id": "pmwbe779b",
    "name": "Sushi",
    "desc": "Aprende a hacer tu propio sushi",
    "color": "#e07a1f",
-   "x": 22.5,
-   "z": -2.5
+   "x": 27.5,
+   "z": -5
   },
   {
    "id": "pmwbe8r3l",
@@ -244,7 +244,7 @@
   },
   {
    "t": "15:00",
-   "end": "17:00",
+   "end": "18:00",
    "name": "Taller de sushi",
    "group": "a-gourmet",
    "pin": "pmwbe779b"
@@ -326,15 +326,15 @@
   },
   {
    "id": "gmwkpd4l4",
-   "x": 36.5,
-   "z": -10.5,
+   "x": 26.5,
+   "z": -1.5,
    "rot": 0,
    "size": "4x4"
   },
   {
    "id": "gmwkpd7mc",
-   "x": 32.5,
-   "z": -10,
+   "x": 21.5,
+   "z": -1.5,
    "rot": 0,
    "size": "4x4"
   }
