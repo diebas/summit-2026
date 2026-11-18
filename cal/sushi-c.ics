@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Summit 2026//Mapa Las Carretas//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:sushi-c@summit-2026
+DTSTAMP:20261118T215124Z
+DTSTART:20261121T200000Z
+DTEND:20261121T204000Z
+SUMMARY:Taller de sushi · Turno C
+LOCATION:Establecimiento Las Carretas · Área gourmet (pin Sushi)
+DESCRIPTION:Tu turno en Taller de sushi (17:00–17:40). Mapa: https://diebas.github.io/summit-2026/
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Taller de sushi · Turno C en 15 minutos
+TRIGGER:-PT15M
+END:VALARM
+END:VEVENT
+END:VCALENDAR

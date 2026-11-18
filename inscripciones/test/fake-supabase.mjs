@@ -7,7 +7,7 @@ import { startDb, stopDb } from './db.mjs';
 
 export async function startFake({ port = 8790, falla = +process.env.FALLA_RESPUESTA || 0 } = {}) {
   const db = await startDb();
-  await db.owner.query("update insc.config set v='2026-12-05' where k='fecha'; update insc.config set v='2026-12-05 12:00:00-03' where k='ahora';");
+  await db.owner.query("update insc.config set v='2026-11-21' where k='fecha'; update insc.config set v='2026-11-21 12:00:00-03' where k='ahora';");
   const server = http.createServer((req, res) => {
     const h = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, OPTIONS', 'content-type': 'application/json' };
     if (req.method === 'OPTIONS') { res.writeHead(204, h); return res.end(); }
@@ -29,6 +29,6 @@ export async function startFake({ port = 8790, falla = +process.env.FALLA_RESPUE
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const f = await startFake();
-  console.log(`Supabase de prueba en ${f.url} (clave "anon-key", hora simulada 12:00 del 5/12). Ctrl+C para salir.`);
+  console.log(`Supabase de prueba en ${f.url} (clave "anon-key", hora simulada 12:00 del 21/11). Ctrl+C para salir.`);
   process.on('SIGINT', async () => { await f.stop(); process.exit(0); });
 }

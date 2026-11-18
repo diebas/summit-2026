@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test --test-concurrency=1 reglas.test.mjs concurrencia.test.mjs",
+    "test": "node --test --test-concurrency=1 reglas.test.mjs concurrencia.test.mjs calendario.test.mjs",
     "test:reglas": "node --test reglas.test.mjs",
     "test:carga": "node --test concurrencia.test.mjs",
     "test:pantalla": "node --test pantalla.test.mjs",

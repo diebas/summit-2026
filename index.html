@@ -328,6 +328,8 @@ body.night .atime{color:#ffd35a}
 .ins-mine .st{font:600 12px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:#7fe0c2}.ins-mine li.espera .st{color:#ffcd3c}
 .ins-mine b{font:700 16px/1.2 var(--body)}.ins-mine .w{color:var(--mist);font-size:14px}
 .ins-mine .btn{justify-self:start;margin-top:4px}
+.ins-cal{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:6px}
+.ins-cal .btn{margin-top:0;text-decoration:none;display:inline-flex;align-items:center}
 .ins-card{border:3px solid #3a5666;border-left:8px solid var(--c);background:#10241f;padding:12px;display:grid;gap:8px}
 .ins-card header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.ins-card header b{font:700 17px/1.2 var(--body)}
 .linkbtn{border:0;background:none;color:#7fe0c2;font:600 13px/1 var(--body);text-decoration:underline;cursor:pointer;padding:4px 0}
@@ -2348,6 +2350,28 @@ function inscAnotar(turno){
   .then(function(){ INSC.busy=false; return inscRefresh(); });
 }
 function newTok(){ var a=new Uint8Array(32); (window.crypto||window.msCrypto).getRandomValues(a); return Array.prototype.map.call(a, function(b){ return (b<16?"0":"")+b.toString(16); }).join(""); }
+/* ---------- agregar al calendario ---------- */
+function calInfo(m){
+  var d=INSC.data, f=inscFind(m.id); if (!d || !d.fecha || !f || f.estado!=="confirmado") return null;
+  var a=f.taller, t=f.turno, ini=a.tipo==="cola" ? masajeHora(a,t,f.pos) : t.inicio, fin=a.tipo==="cola" ? addMin(ini, a.slot_min||15) : t.fin;
+  var pin=STATE.pins.filter(function(p){ return p.id===a.pin; })[0], area=pin && STATE.areas.filter(function(x){ return x.points.length>=3 && inPoly(pin.x,pin.z,x.points); })[0];
+  function utc(hhmm){ var q=hhmm.split(":"), x=new Date(d.fecha+"T"+hhmm+":00-03:00"); if (+q[0]<6) x=new Date(x.getTime()+864e5);   /* Montevideo es UTC-3 todo el año */
+    return x.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,""); }
+  var title=a.nombre+(a.tipo==="cola" ? "" : " · "+t.nombre);
+  var where=(STATE.title||"Summit 2026")+" · Establecimiento Las Carretas"+(area?" · "+area.name:"")+(pin?" (pin "+pin.name+")":"");
+  var desc=(a.tipo==="cola" ? "Sos el nº "+f.pos+". Horario estimado: es tentativo, estate atento cuando se acerque tu turno.\n" : "")+
+           "Mapa e inscripciones: https://diebas.github.io/summit-2026/";
+  return {uid:m.id+"@summit-2026", title:title, where:where, desc:desc, start:utc(ini), end:utc(fin)};
+}
+function calGoogle(c){
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(c.title)+"&dates="+c.start+"/"+c.end+
+    "&details="+encodeURIComponent(c.desc+"\nRecordatorio: 15 minutos antes.")+"&location="+encodeURIComponent(c.where)+"&ctz=America/Montevideo";
+}
+var IOS=/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+var CAL_BASE="https://diebas.github.io/summit-2026/cal/";
+/* archivo .ics publicado en GitHub Pages para ese turno (en masajes, el del horario estimado) */
+function calUrl(m){ var f=inscFind(m.id); if (!f) return null; var a=f.taller;
+  return CAL_BASE+(a.tipo==="cola" ? a.id+"-"+masajeHora(a,f.turno,f.pos).replace(":","") : f.turno.id)+".ics"; }
 function inscDesanotar(id){
   var o=inscLS(), m=o.mias.filter(function(x){ return x.id===id; })[0]; if (!m || INSC.busy) return;
   INSC.busy=true; rerenderKeep();
@@ -2394,6 +2418,9 @@ function renderInsc(sc){
     mine.forEach(function(m){ var f=inscFind(m.id); if (!f) return; var a=f.taller, t=f.turno, tok=o.mias.some(function(x){ return x.id===m.id; });
       var when = a.tipo==="cola" ? (f.estado==="confirmado" ? "Sos el nº "+DG(f.pos)+" · aprox. "+DG(masajeHora(a,t,f.pos))+" (tentativo)" : "") : esc(t.nombre)+" · "+DG(t.inicio+"–"+t.fin);
       h+='<li class="'+f.estado+'"><span class="st">'+(f.estado==="confirmado"?"✓ Confirmado":"En espera · nº "+DG(f.pos))+'</span><b>'+esc(a.nombre)+'</b><span class="w">'+when+(m.via==="excepcion"?" · por lugar libre":"")+'</span>'+
+         (calInfo(m) ? '<div class="ins-cal">'+(IOS
+            ? '<a class="btn small primary" href="'+esc(calUrl(m))+'">Agregar al calendario</a><a class="linkbtn" target="_blank" rel="noopener" href="'+esc(calGoogle(calInfo(m)))+'">Google Calendar</a>'
+            : '<a class="btn small primary" target="_blank" rel="noopener" href="'+esc(calGoogle(calInfo(m)))+'">Agregar a Google Calendar</a><a class="linkbtn" href="'+esc(calUrl(m))+'" download>Otro calendario (.ics)</a>')+'</div>' : '')+
          (t.cerrado ? '' : tok ? '<button class="btn small ghost" type="button" data-baja="'+esc(m.id)+'">Desanotarme</button>' : '<span class="w">Te anotaste desde otro celular: para bajarte, pedíselo a la organización.</span>')+'</li>'; });
     h+='</ul>';
   }

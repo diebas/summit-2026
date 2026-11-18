@@ -79,6 +79,14 @@ test('anotarse en sushi: confirmado y bloquea bartender hasta media hora antes',
   assert.ok(turnos.some((t) => /Turno A · 17:00–17:45.*Se libera a las 16:30/.test(t)), turnos.join('\n'));
 });
 
+test('confirmado: botones para agregar al calendario (iPhone: .ics publicado; también Google Calendar)', async () => {
+  await page.waitForSelector('.ins-cal a');
+  const links = await page.$$eval('.ins-cal a', (as) => as.map((a) => a.href));
+  assert.ok(links.includes('https://diebas.github.io/summit-2026/cal/sushi-a.ics'), links.join('\n'));
+  const g = links.find((h) => h.startsWith('https://calendar.google.com/'));
+  assert.ok(g && g.includes('dates=20261121T180000Z/20261121T184000Z'), g);
+});
+
 test('otra persona en el mismo celular queda en lista de espera de un turno lleno', async () => {
   await click('#insc-add'); await page.type('#insc-mail', 'ana.lopez@wyeworks.com'); await click('#insc-login button[type=submit]');
   await page.waitForFunction(() => /Ana Lopez/.test(document.querySelector('.ins-sess')?.innerText) && document.querySelector('[data-turno="bartender-b"]:not([disabled])'), { timeout: 40000, polling: 250 });

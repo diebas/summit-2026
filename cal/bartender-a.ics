@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Summit 2026//Mapa Las Carretas//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:bartender-a@summit-2026
+DTSTAMP:20261118T215124Z
+DTSTART:20261121T200000Z
+DTEND:20261121T204500Z
+SUMMARY:Taller de bartender · Turno A
+LOCATION:Establecimiento Las Carretas · Área gourmet (pin Bartender)
+DESCRIPTION:Tu turno en Taller de bartender (17:00–17:45). Mapa: https://diebas.github.io/summit-2026/
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Taller de bartender · Turno A en 15 minutos
+TRIGGER:-PT15M
+END:VALARM
+END:VEVENT
+END:VCALENDAR
