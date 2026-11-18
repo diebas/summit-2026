@@ -309,6 +309,9 @@ body.night .atime{color:#ffd35a}
 .gitem{border-left:6px solid #f7f6f1}
 /* inscripciones */
 .insc{display:grid;gap:10px}
+/* números legibles: en Pixelify el 5 se confunde con el 8 */
+.insc .dg,.ins-admin .dg{white-space:nowrap;font-family:"Press Start 2P",monospace;font-size:.78em;letter-spacing:.02em;font-weight:400;vertical-align:.05em;font-variant-numeric:tabular-nums}
+.ins-names ol li::marker{font-family:"Press Start 2P",monospace;font-size:.7em}
 .ins-msg{margin:0;padding:10px 12px;border:3px solid;font:600 15px/1.35 var(--body)}
 .ins-msg.ok{border-color:#3fbf7f;background:rgba(63,191,127,.16)}.ins-msg.warn{border-color:#ffcd3c;background:rgba(255,205,60,.14)}.ins-msg.err{border-color:#ff6b57;background:rgba(255,107,87,.16)}
 .ins-warn{border-left:4px solid #ffcd3c}
@@ -2227,6 +2230,7 @@ function addMin(hhmm, m){ var p=hhmm.split(":"), t=(+p[0])*60+(+p[1])+m; t=((t%1
 function inscFind(id){ var r=null; (INSC.data?INSC.data.talleres:[]).forEach(function(a){ a.turnos.forEach(function(t){
   t.confirmados.forEach(function(x,i){ if (x.id===id) r={taller:a, turno:t, estado:"confirmado", pos:i+1}; });
   t.espera.forEach(function(x,i){ if (x.id===id) r={taller:a, turno:t, estado:"espera", pos:i+1}; }); }); }); return r; }
+function DG(x){ return '<span class="dg">'+x+'</span>'; }
 function masajeHora(a, t, pos){ return addMin(t.inicio, Math.floor((pos-1)/(a.por_slot||1))*(a.slot_min||15)); }
 
 function inscAnotar(turno){
@@ -2283,8 +2287,8 @@ function renderInsc(sc){
   if (yo && mine.length){
     h+='<p class="sec">Mis inscripciones</p><ul class="ins-mine">';
     mine.forEach(function(m){ var f=inscFind(m.id); if (!f) return; var a=f.taller, t=f.turno, tok=o.mias.some(function(x){ return x.id===m.id; });
-      var when = a.tipo==="cola" ? (f.estado==="confirmado" ? "Sos el nº "+f.pos+" · aprox. "+masajeHora(a,t,f.pos)+" (tentativo)" : "") : t.nombre+" · "+t.inicio+"–"+t.fin;
-      h+='<li class="'+f.estado+'"><span class="st">'+(f.estado==="confirmado"?"✓ Confirmado":"En espera · nº "+f.pos)+'</span><b>'+esc(a.nombre)+'</b><span class="w">'+esc(when)+(m.via==="excepcion"?" · por lugar libre":"")+'</span>'+
+      var when = a.tipo==="cola" ? (f.estado==="confirmado" ? "Sos el nº "+DG(f.pos)+" · aprox. "+DG(masajeHora(a,t,f.pos))+" (tentativo)" : "") : esc(t.nombre)+" · "+DG(t.inicio+"–"+t.fin);
+      h+='<li class="'+f.estado+'"><span class="st">'+(f.estado==="confirmado"?"✓ Confirmado":"En espera · nº "+DG(f.pos))+'</span><b>'+esc(a.nombre)+'</b><span class="w">'+when+(m.via==="excepcion"?" · por lugar libre":"")+'</span>'+
          (t.cerrado ? '' : tok ? '<button class="btn small ghost" type="button" data-baja="'+esc(m.id)+'">Desanotarme</button>' : '<span class="w">Te anotaste desde otro celular: para bajarte, pedíselo a la organización.</span>')+'</li>'; });
     h+='</ul>';
   }
@@ -2302,15 +2306,15 @@ function renderInsc(sc){
       if (mineHere) btn='<span class="ins-badge ok">'+(myIn.estado==="confirmado"?"✓ Estás anotado/a":"Estás en espera")+'</span>';
       else if (t.cerrado) btn='<span class="ins-badge">Cerrado</span>';
       else if (myIn) btn='';
-      else if (myOther && !t.desbloqueado) btn='<span class="ins-badge">Se libera a las '+esc(t.desbloqueo||"—")+' si quedan lugares</span>';
+      else if (myOther && !t.desbloqueado) btn='<span class="ins-badge">Se libera a las '+DG(esc(t.desbloqueo||"—"))+' si quedan lugares</span>';
       else if (myOther && free===0) btn='<span class="ins-badge">Lleno</span>';
       else btn='<button class="btn small'+(free?' primary':'')+'" type="button" data-turno="'+esc(t.id)+'"'+(INSC.busy?' disabled':'')+'>'+(free?'Anotarme':(a.espera?'Anotarme en espera':'Lleno'))+'</button>';
-      var label = a.tipo==="cola" ? 'Desde las '+t.inicio : esc(t.nombre)+' · '+t.inicio+'–'+t.fin;
-      var cnt = free ? 'Quedan <b>'+free+'</b> de '+t.cupo : 'Lleno'+(t.espera.length?' · '+t.espera.length+' en espera':'');
+      var label = a.tipo==="cola" ? 'Desde las '+DG(t.inicio) : esc(t.nombre)+' · '+DG(t.inicio+'–'+t.fin);
+      var cnt = free ? 'Quedan <b>'+DG(free)+'</b> de '+DG(t.cupo) : 'Lleno'+(t.espera.length?' · '+DG(t.espera.length)+' en espera':'');
       h+='<div class="ins-turno'+(t.cerrado?' closed':'')+'"><div><span class="tl">'+label+'</span><span class="cnt">'+cnt+'</span></div>'+btn+'</div>';
       if (n || t.espera.length){
-        h+='<details class="ins-names"><summary>Ver anotados ('+n+(t.espera.length?' + '+t.espera.length+' en espera':'')+')</summary><ol>'+
-          t.confirmados.map(function(x,i){ return '<li>'+esc(x.nombre)+(a.tipo==="cola"?' <em>~'+masajeHora(a,t,i+1)+'</em>':'')+'</li>'; }).join("")+'</ol>'+
+        h+='<details class="ins-names"><summary>Ver anotados ('+DG(n)+(t.espera.length?' + '+DG(t.espera.length)+' en espera':'')+')</summary><ol>'+
+          t.confirmados.map(function(x,i){ return '<li>'+esc(x.nombre)+(a.tipo==="cola"?' <em>~'+DG(masajeHora(a,t,i+1))+'</em>':'')+'</li>'; }).join("")+'</ol>'+
           (t.espera.length?'<p class="sub">En espera</p><ol>'+t.espera.map(function(x){ return '<li>'+esc(x.nombre)+'</li>'; }).join("")+'</ol>':'')+'</details>';
       }
     });
@@ -2362,7 +2366,7 @@ function renderInscAdmin(box){
       var all=INSC.admin||[];
       d.talleres.forEach(function(a){ a.turnos.forEach(function(t){
         var rows=all.filter(function(x){ return x.turno===t.id && x.estado!=="baja"; });
-        h+='<details class="ins-admin"><summary><b>'+esc(a.nombre)+'</b> · '+(a.tipo==="cola"?"":esc(t.nombre)+' '+t.inicio+' · ')+rows.filter(function(x){return x.estado==="confirmado";}).length+'/'+t.cupo+(rows.some(function(x){return x.estado==="espera";})?' · '+rows.filter(function(x){return x.estado==="espera";}).length+' en espera':'')+'</summary><ol>'+
+        h+='<details class="ins-admin"><summary><b>'+esc(a.nombre)+'</b> · '+(a.tipo==="cola"?"":esc(t.nombre)+' '+DG(t.inicio)+' · ')+DG(rows.filter(function(x){return x.estado==="confirmado";}).length+'/'+t.cupo)+(rows.some(function(x){return x.estado==="espera";})?' · '+DG(rows.filter(function(x){return x.estado==="espera";}).length)+' en espera':'')+'</summary><ol>'+
           rows.map(function(x){ return '<li class="'+x.estado+'"><span>'+esc(x.nombre)+' <small>'+esc(x.email)+(x.estado==="espera"?' · espera':'')+(x.via!=="normal"?' · '+esc(x.via):'')+'</small></span><button class="btn small ghost" type="button" data-abaja="'+esc(x.id)+'">Dar de baja</button></li>'; }).join("")+'</ol>'+
           '<form class="ia-alta" data-turno="'+esc(t.id)+'"><input type="email" placeholder="mail@'+esc(d.dominio)+'" aria-label="Mail"><button class="btn small" type="submit">+ Anotar (sin reglas)</button></form></details>';
       }); });
