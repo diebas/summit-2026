@@ -1038,8 +1038,8 @@ fill([[-120,96],[-40,95],[-60,122],[-140,118]], 5.5, .75, .2);
 var CLEARED = [[41.5,-41.5,7],[59,-54.5,7],[2.5,-48,10]];
 /* escenas modeladas en los pines: el tipo sale del nombre de la atracción */
 function propKind(p){ var n=(p.name||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  if (/food ?truck/.test(n)) return "foodtrucks"; if (/arquer|arco/.test(n)) return "arqueria"; if (/burbuja/.test(n)) return "burbuja"; if (/samba/.test(n)) return "samba"; if (/futbol ?tenis|fut ?tenis|futenis/.test(n)) return "futenis"; if (/\btejo\b/.test(n)) return "tejo"; if (/personaliz/.test(n)) return "perso"; return null; }
-var PROP_CLEAR = {foodtrucks:[[-5,-4,12],[-5,4,9],[3,-2,8]], arqueria:[[-6,5,5],[-6,-4,6],[-6,-13,5]], burbuja:[], samba:[[-3,-3.5,6.5]], futenis:[[-4,5,8],[4,5,8]], tejo:[[3,0,7.5],[3,-7,8]], perso:[[-3.5,-1,6]]};
+  if (/food ?truck/.test(n)) return "foodtrucks"; if (/arquer|arco/.test(n)) return "arqueria"; if (/burbuja/.test(n)) return "burbuja"; if (/samba/.test(n)) return "samba"; if (/futbol ?tenis|fut ?tenis|futenis/.test(n)) return "futenis"; if (/\btejo\b/.test(n)) return "tejo"; if (/personaliz/.test(n)) return "perso"; if (/bartender|tragos|cocteler/.test(n)) return "bar"; if (/sushi/.test(n)) return "sushi"; return null; }
+var PROP_CLEAR = {foodtrucks:[[-5,-4,12],[-5,4,9],[3,-2,8]], arqueria:[[-6,5,5],[-6,-4,6],[-6,-13,5]], burbuja:[], samba:[[-3,-3.5,6.5]], futenis:[[-4,5,8],[4,5,8]], tejo:[[3,0,7.5],[3,-7,8]], perso:[[-3.5,-1,6]], bar:[[-3,0,4.5]], sushi:[[-3,0,4]]};
 STATE.pins.forEach(function(p){ var k=propKind(p); if (k) PROP_CLEAR[k].forEach(function(c){ CLEARED.push([p.x+c[0], p.z+c[1], c[2]]); }); });
 // zona abierta entre el claro y el lugar despejado; quedan solo los árboles contra la cancha y contra el borde este
 var CLEARED_POLYS = [[[47,-69],[64,-69],[67,-60],[65,-45],[50,-41],[46,-52]]];
@@ -1636,6 +1636,77 @@ PROP_BUILD.perso=function(){
     lid.rotation.x = u<.2 ? -.9*(u/.2) : (u<.35 ? -.9 : (u<.45 ? -.9*(1-(u-.35)/.1) : 0));
     va.rotation.x = u>.35&&u<.45 ? -1.4 : -1.1;
     clients.forEach(function(C){ C.a.rotation.x=-.4-.5*Math.max(0,Math.sin(s*1.3+C.ph)); C.o.position.x=C.x+.25*Math.sin(s*.4+C.ph); C.o.rotation.y=Math.PI+.25*Math.sin(s*.6+C.ph); });
+  };
+  return outer;
+};
+/* barra móvil con un bartender agitando la coctelera */
+PROP_BUILD.bar=function(){
+  var outer=new THREE.Group(), g=new THREE.Group(); g.position.set(-3,0,0); outer.add(g);
+  var dark=lam(0x2b2420), wood=lam(0x8a5a32), top=lam(0xe9e4da), steel=lam(0xc3c8cc), glow=new THREE.MeshBasicMaterial({color:0xffb347});
+  var front=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.05,.6), wood); front.position.set(0,.53,.4); front.castShadow=true; g.add(front);
+  var strip=new THREE.Mesh(new THREE.BoxGeometry(2.62,.06,.62), glow); strip.position.set(0,.2,.4); g.add(strip);
+  var counter=new THREE.Mesh(new THREE.BoxGeometry(2.8,.07,.75), top); counter.position.set(0,1.09,.42); counter.castShadow=true; g.add(counter);
+  [-1.3,1.3].forEach(function(x){ var side=new THREE.Mesh(new THREE.BoxGeometry(.08,1.05,.6), wood); side.position.set(x,.53,.4); g.add(side); });
+  /* estante con botellas detrás */
+  var shelf=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.3,.35), dark); shelf.position.set(0,.65,-1.05); shelf.castShadow=true; g.add(shelf);
+  var bcols=[0x2f8f4a,0xb5651d,0xe8e4d0,0x6a2a7a,0x2f6fbf,0xd9482b,0xf2c230,0x3a2a1e];
+  for (var i=0;i<10;i++){ var c=bcols[i%bcols.length], h=.28+(i%3)*.05;
+    var b=new THREE.Mesh(new THREE.CylinderGeometry(.045,.05,h,8), new THREE.MeshLambertMaterial({color:c, transparent:true, opacity:.88})); b.position.set(-1.05+i*.23,1.3+h/2,-1.0); g.add(b);
+    var nk=new THREE.Mesh(new THREE.CylinderGeometry(.015,.02,.08,6), b.material); nk.position.set(b.position.x,1.3+h+.04,-1.0); g.add(nk); }
+  /* copas y vasos sobre la barra */
+  [[-.9,.5,0xff8a3d],[-.5,.38,0xf5e05a],[.75,.45,0xd84a7a],[1.05,.36,0x7fd3e8]].forEach(function(q){
+    var gl=new THREE.Mesh(new THREE.CylinderGeometry(.06,.045,.16,10), new THREE.MeshLambertMaterial({color:q[2], transparent:true, opacity:.85})); gl.position.set(q[0],1.21,q[1]); g.add(gl);
+    var lime=new THREE.Mesh(new THREE.TorusGeometry(.035,.012,4,8), lam(0x7ac943)); lime.position.set(q[0]+.05,1.3,q[1]); g.add(lime); });
+  var ice=new THREE.Mesh(new THREE.BoxGeometry(.35,.14,.25), steel); ice.position.set(.2,1.19,.3); g.add(ice);
+  /* bartender (detrás de la barra, mirando al frente) */
+  var bt=person(0x1e1e22, 0x1e1e22); bt.position.set(0,0,-.35); g.add(bt);
+  var apron=new THREE.Mesh(new THREE.BoxGeometry(.44,.5,.02), lam(0x8a5a32)); apron.position.set(0,1.0,.13); bt.add(apron);
+  var armR=bt.userData.arm(1,-1.6,.2), armL=bt.userData.arm(-1,-1.6,-.2);
+  var shaker=new THREE.Mesh(new THREE.CylinderGeometry(.06,.05,.26,10), steel); bt.add(shaker);
+  /* clientes en la barra */
+  var cl=[];
+  [[-.7,1.35,0xd9482b],[.8,1.4,0x2f9e6b]].forEach(function(q,i){ var c=person(q[2]); c.position.set(q[0],0,q[1]); c.rotation.y=Math.PI; g.add(c); var a=c.userData.arm(1,-.3,.08); c.userData.arm(-1,0,-.08); cl.push({a:a,ph:i*2.3}); });
+  outer.userData.anim=function(t){
+    var s=t/1000, shake=Math.sin(s*14)*.18, cyc=(s%5)/5, shaking=cyc<.6;
+    armR.rotation.x = shaking ? -2.3+shake : -1.4; armL.rotation.x = shaking ? -2.2+shake : -1.3;
+    armR.rotation.z = .35; armL.rotation.z = -.35;
+    shaker.position.set(0, shaking ? 1.98+shake*.25 : 1.45, shaking ? .18 : .45); shaker.rotation.x = shaking ? .3 : -1.2+.2*Math.sin(s*3);
+    cl.forEach(function(C){ C.a.rotation.x=-.3-.6*Math.max(0,Math.sin(s*.9+C.ph)); });
+  };
+  return outer;
+};
+/* mesita de sushi con alguien preparando rolls */
+PROP_BUILD.sushi=function(){
+  var outer=new THREE.Group(), g=new THREE.Group(); g.position.set(-3,0,0); outer.add(g);
+  var wood=lam(0x9a7650), cloth=lam(0xf4f2ec), nori=lam(0x1f2a1f), rice=lam(0xf6f4ee), salmon=lam(0xf08a5d), bamboo=lam(0xc9b27a), avo=lam(0x8fbf4a);
+  var tt=new THREE.Mesh(new THREE.BoxGeometry(1.8,.06,.9), cloth); tt.position.set(0,.85,0); tt.castShadow=true; g.add(tt);
+  var skirt=new THREE.Mesh(new THREE.BoxGeometry(1.82,.55,.92), lam(0xd23a2a)); skirt.position.set(0,.55,0); g.add(skirt);
+  [[-.8,-.38],[.8,-.38],[-.8,.38],[.8,.38]].forEach(function(q){ var l=new THREE.Mesh(new THREE.BoxGeometry(.05,.82,.05), wood); l.position.set(q[0],.41,q[1]); g.add(l); });
+  var board=new THREE.Mesh(new THREE.BoxGeometry(.6,.04,.38), wood); board.position.set(0,.9,-.05); g.add(board);
+  var mat=new THREE.Mesh(new THREE.BoxGeometry(.32,.015,.3), bamboo); mat.position.set(-.5,.89,-.05); g.add(mat);
+  /* roll entero que se está cortando */
+  var roll=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.42,14), nori); roll.rotation.z=Math.PI/2; roll.position.set(-.05,.98,-.05); g.add(roll);
+  /* piezas cortadas en un plato */
+  var plate=new THREE.Mesh(new THREE.BoxGeometry(.5,.02,.22), lam(0x22262a)); plate.position.set(.55,.9,.15); g.add(plate);
+  for (var i=0;i<6;i++){ var pc=new THREE.Group(); pc.position.set(.36+i*.075,.94,.15); g.add(pc);
+    var o=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.05,12), nori); pc.add(o);
+    var r=new THREE.Mesh(new THREE.CylinderGeometry(.033,.033,.052,12), rice); pc.add(r);
+    var f=new THREE.Mesh(new THREE.CylinderGeometry(.013,.013,.054,6), i%2?salmon:avo); pc.add(f); }
+  /* bowl de arroz, salmón y soja */
+  var bowl=new THREE.Mesh(new THREE.CylinderGeometry(.14,.09,.1,14), lam(0x2f3a4a)); bowl.position.set(-.55,.93,.25); g.add(bowl);
+  var rr=new THREE.Mesh(new THREE.SphereGeometry(.12,12,8,0,Math.PI*2,0,Math.PI/2), rice); rr.position.set(-.55,.96,.25); g.add(rr);
+  var fish=new THREE.Mesh(new THREE.BoxGeometry(.22,.06,.1), salmon); fish.position.set(.45,.91,-.25); g.add(fish);
+  var soy=new THREE.Mesh(new THREE.CylinderGeometry(.03,.035,.12,8), lam(0x3a1e12)); soy.position.set(.75,.94,-.28); g.add(soy);
+  /* sushiman con chaqueta blanca y bandana */
+  var chef=person(0xf4f2ec, 0x22262a); chef.position.set(0,0,-.75); g.add(chef);
+  var band=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.06,12), lam(0xd23a2a)); band.position.y=1.66; chef.add(band);
+  var knifeArm=chef.userData.arm(1,-1.25,.25), leftArm=chef.userData.arm(-1,-1.2,-.3);
+  var knife=new THREE.Mesh(new THREE.BoxGeometry(.02,.03,.22), lam(0xd8dde0)); knife.position.set(0,-.62,.08); knifeArm.add(knife);
+  outer.userData.anim=function(t){
+    var s=t/1000, k=(s%1.1)/1.1;
+    knifeArm.rotation.x = -1.25 + (k<.5 ? .25*Math.sin(k*2*Math.PI) : 0) ;   /* corta */
+    knifeArm.rotation.z = .25 - .06*Math.floor((s%6.6)/1.1);                     /* avanza a lo largo del roll */
+    leftArm.rotation.x = -1.2 + .05*Math.sin(s*2);
   };
   return outer;
 };
