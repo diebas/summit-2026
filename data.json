@@ -97,6 +97,14 @@
    "color": "#e2b445",
    "x": 32,
    "z": -63.5
+  },
+  {
+   "id": "pmwmlzi53",
+   "name": "Pool Ball",
+   "desc": "",
+   "color": "#e2b445",
+   "x": 6.5,
+   "z": -51
   }
  ],
  "examples": false,
