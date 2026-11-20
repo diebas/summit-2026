@@ -26,7 +26,7 @@ after(async () => {
 });
 
 const vivos = async (turno) => (await db.owner.query(
-  `select estado, count(*)::int n from insc.inscripciones where turno_id=$1 and estado<>'baja' group by estado`, [turno])).rows
+  `select estado, count(*)::int n from insc.fila($1) group by estado`, [turno])).rows
   .reduce((o, r) => ({ ...o, [r.estado]: r.n }), { confirmado: 0, espera: 0 });
 
 test(`${N} personas a la vez por 15 lugares: exactamente 15 confirmados y el resto en espera`, async () => {
@@ -42,24 +42,36 @@ test(`${N} personas a la vez por 15 lugares: exactamente 15 confirmados y el res
 });
 
 test('5 bajas a la vez: suben exactamente 5 de la espera, en orden de llegada', async () => {
-  const conf = (await db.owner.query(`select id, token_hash from insc.inscripciones where turno_id=$1 and estado='confirmado' order by creado limit 5`, [T.a])).rows;
-  // las bajas las hace la organización (la clave del celular no la tenemos acá)
+  const conf = (await db.owner.query(`select id from insc.fila($1) where estado='confirmado' order by rn limit 5`, [T.a])).rows;
+  const espera5 = (await db.owner.query(`select id from insc.fila($1) where estado='espera' order by rn limit 5`, [T.a])).rows.map((r) => r.id);
   const rs = await Promise.all(conf.map((c) => A.admin('baja', { id: c.id }, process.env.INSC_ADMIN_KEY)));
   if (rs.some((r) => r.error === 'no_admin')) return; // en Supabase sin INSC_ADMIN_KEY: se saltea
   assert.ok(rs.every((r) => r.ok));
   assert.deepEqual(await vivos(T.a), { confirmado: 15, espera: N - 20 });
-  const subidos = (await db.owner.query(`select email from insc.inscripciones where turno_id=$1 and via='espera' order by confirmado_en`, [T.a])).rows.length;
-  assert.equal(subidos, 5);
+  const ahora = (await db.owner.query(`select id from insc.fila($1) where estado='confirmado'`, [T.a])).rows.map((r) => r.id);
+  assert.ok(espera5.every((id) => ahora.includes(id)), 'subieron los 5 primeros de la espera');
 });
 
-test('la misma persona en dos talleres excluyentes a la vez: queda en uno solo', async () => {
+test('la misma persona se anota a la vez en los dos del par: una queda normal y la otra provisoria', async () => {
   for (let i = 0; i < 10; i++) {
     const e = `zz.doble${i}@wyeworks.com`;
-    const [x, y] = await Promise.all([A.anotar(e, T.b, null, token()), A.anotar(e, T.c, null, token())]);
-    const oks = [x, y].filter((r) => r.estado === 'confirmado').length;
-    assert.equal(oks, 1, JSON.stringify([x, y]));
-    assert.equal([x, y].find((r) => !r.ok).error, 'excluyente');
+    const rs = await Promise.all([A.anotar(e, T.b, null, token()), A.anotar(e, T.c, null, token())]);
+    assert.ok(rs.every((r) => r.ok), JSON.stringify(rs));
+    assert.deepEqual(rs.map((r) => r.prioridad).sort(), ['normal', 'provisoria']);
   }
+});
+
+test('turno lleno de provisorias y 20 normales a la vez: entran 15 normales y las provisorias pasan a espera', async () => {
+  const P = 'zz-carga-d';
+  await db.owner.query(`insert into insc.turnos (id, taller_id, nombre, inicio, fin, cupo, orden) values ($1,'zz-carga','D','21:00','21:30',15,4)`, [P]);
+  for (let i = 0; i < 15; i++) { const e = `zz.prov${i}@wyeworks.com`; await A.anotar(e, T.b, null, token()); await A.anotar(e, P, null, token()); }
+  assert.deepEqual(await vivos(P), { confirmado: 15, espera: 0 });
+  const rs = await Promise.all(Array.from({ length: 20 }, (_, i) => A.anotar(`zz.norm${i}@wyeworks.com`, P, null, token())));
+  assert.ok(rs.every((r) => r.ok && r.prioridad === 'normal'));
+  const f = (await db.owner.query(`select prioridad, estado from insc.fila($1) order by rn`, [P])).rows;
+  assert.equal(f.filter((x) => x.estado === 'confirmado' && x.prioridad === 'normal').length, 15, 'los 15 lugares para normales');
+  assert.equal(f.filter((x) => x.estado === 'espera').length, 20);
+  assert.ok(f.slice(15, 20).every((x) => x.prioridad === 'normal') && f.slice(20).every((x) => x.prioridad === 'provisoria'), 'en la espera, normales primero');
 });
 
 test('doble toque (mismo pedido repetido a la vez): una sola inscripción', async () => {

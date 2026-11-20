@@ -53,6 +53,7 @@ after(async () => { await browser?.close(); web?.close(); await fake?.stop(); })
 const texto = (sel) => page.$eval(sel, (e) => e.innerText);
 const click = async (sel) => { await page.waitForSelector(sel, { visible: true, timeout: 40000 }); await page.$eval(sel, (e) => e.click()); };
 const esperarTexto = (sel, re, timeout = 40000) => page.waitForFunction((s, src) => { const e = document.querySelector(s); return e && new RegExp(src, 'i').test(e.innerText); }, { timeout, polling: 250 }, sel, re.source);
+const turnoEsp = (e, id) => e.talleres.flatMap((a) => a.turnos).find((t) => t.id === id).espera.map((x) => x.nombre);
 const mias = () => page.evaluate(() => JSON.parse(localStorage.getItem('lascarretas-insc') || '{}').mias || []);
 
 test('aparece la pestaña Anotarme y pide el mail', async () => {
@@ -71,12 +72,12 @@ test('rechaza un mail que no es de WyeWorks; con el mail correcto completa el no
   await esperarTexto('.ins-sess', /Diego Baste/);
 });
 
-test('anotarse en sushi: confirmado y bloquea bartender hasta media hora antes', async () => {
+test('anotarse en sushi: confirmado; bartender queda disponible como provisorio', async () => {
   await page.waitForSelector('[data-turno="sushi-a"]:not([disabled])');
   await click('[data-turno="sushi-a"]');
   await esperarTexto('.ins-mine', /Confirmado/);
   const turnos = await page.$$eval('.ins-turno', (xs) => xs.map((x) => x.innerText.replace(/\s+/g, ' ')));
-  assert.ok(turnos.some((t) => /Turno A · 17:00–17:45.*Se libera a las 16:30/.test(t)), turnos.join('\n'));
+  assert.ok(turnos.some((t) => /Turno A · 17:00–17:45.*Anotarme \(provisorio\)/.test(t)), turnos.join('\n'));
 });
 
 test('confirmado: botones para agregar al calendario (iPhone: .ics publicado; también Google Calendar)', async () => {
@@ -87,11 +88,18 @@ test('confirmado: botones para agregar al calendario (iPhone: .ics publicado; ta
   assert.ok(g && g.includes('dates=20261121T180000Z/20261121T184000Z'), g);
 });
 
+test('anotarse también en bartender (lleno): queda en espera como provisorio', async () => {
+  await click('[data-turno="bartender-b"]');
+  await esperarTexto('.ins-msg', /lista de espera \(nº 1\), detrás de quienes no tienen ninguno/);
+});
+
 test('otra persona en el mismo celular queda en lista de espera de un turno lleno', async () => {
   await click('#insc-add'); await page.type('#insc-mail', 'ana.lopez@wyeworks.com'); await click('#insc-login button[type=submit]');
   await page.waitForFunction(() => /Ana Lopez/.test(document.querySelector('.ins-sess')?.innerText) && document.querySelector('[data-turno="bartender-b"]:not([disabled])'), { timeout: 40000, polling: 250 });
   await click('[data-turno="bartender-b"]');
-  await esperarTexto('.ins-msg', /lista de espera \(nº 1\)/);
+  await esperarTexto('.ins-msg', /lista de espera \(nº 1\)\. Si se libera/);   // normal: delante de Diego (provisorio)
+  const espera = turnoEsp(await A.estado(), 'bartender-b');
+  assert.deepEqual(espera, ['Ana Lopez', 'Diego Baste']);
 });
 
 test('red mala: la respuesta se pierde, el reintento recupera la misma inscripción y la clave queda en el celular', async () => {
@@ -106,12 +114,13 @@ test('red mala: la respuesta se pierde, el reintento recupera la misma inscripci
   await page.evaluate(() => { window.__redMala = false; });
 });
 
-test('cada uno se baja solo desde su celular', async () => {
+test('cada uno se baja solo desde su celular; al bajarse de sushi, bartender deja de ser provisorio', async () => {
   await page.$$eval('.pchip', (bs) => bs.find((b) => b.textContent === 'Diego').click());
   await page.waitForFunction(() => /Diego Baste/.test(document.querySelector('.ins-sess')?.innerText) && document.querySelector('[data-baja]'), { timeout: 40000, polling: 250 });
   await click('[data-baja]'); await click('[data-baja]');               // dos toques: «¿Seguro?»
   await esperarTexto('.ins-msg', /te desanotaste/);
-  assert.equal((await A.estado('diego.baste@wyeworks.com')).yo.inscripciones.length, 0);
+  const yo = (await A.estado('diego.baste@wyeworks.com')).yo.inscripciones;
+  assert.deepEqual(yo.map((i) => [i.taller, i.prioridad]), [['bartender', 'normal']]);
 });
 
 test('la tarjeta del pin de Sushi lleva a Anotarme', async () => {
@@ -130,5 +139,5 @@ test('panel de la organización: conecta con la clave y muestra las listas con m
   await click('#ia-connect');
   await page.waitForFunction(() => document.querySelectorAll('.ins-admin').length > 0, { timeout: 40000, polling: 250 });
   const listas = await page.$$eval('.ins-admin summary', (xs) => xs.map((x) => x.innerText.replace(/\s+/g, ' ')));
-  assert.ok(listas.some((t) => /Turno B 18:00 · 15\/15 · 1 en espera/.test(t)), listas.join('\n'));
+  assert.ok(listas.some((t) => /Turno B 18:00 · 15\/15 · 2 en espera/.test(t)), listas.join('\n'));
 });
