@@ -317,7 +317,8 @@ insert into insc.config values
 insert into insc.talleres (id, nombre, tipo, grupo, pin, espera, slot_min, por_slot, orden) values
   ('sushi',     'Taller de sushi',     'turnos', 'talleres', 'pmwbe779b', true, null, null, 1),
   ('bartender', 'Taller de bartender', 'turnos', 'talleres', 'pmwbe662u', true, null, null, 2),
-  ('masajes',   'Masajes',             'cola',   null,       'p7',        true, 15,   2,    3);
+  ('masajes',   'Masajes',             'cola',   null,       'p7',        true, 15,   2,    3),
+  ('tarot',     'Tarot',               'cola',   null,       'p2',        true, 6,    1,    4);
 
 insert into insc.turnos (id, taller_id, nombre, inicio, fin, cupo, orden) values
   ('sushi-a',     'sushi',     'Turno A', '15:00', '15:40', 15, 1),
@@ -326,7 +327,8 @@ insert into insc.turnos (id, taller_id, nombre, inicio, fin, cupo, orden) values
   ('bartender-a', 'bartender', 'Turno A', '17:00', '17:45', 15, 1),
   ('bartender-b', 'bartender', 'Turno B', '18:00', '18:45', 15, 2),
   ('bartender-c', 'bartender', 'Turno C', '19:00', '19:45', 15, 3),
-  ('masajes',     'masajes',   'Masajes', '14:00', '18:00', 32, 1);
+  ('masajes',     'masajes',   'Masajes', '14:00', '18:00', 32, 1),
+  ('tarot',       'tarot',     'Tarot',   '17:00', '20:00', 30, 1);
 
 -- funciones internas con search_path fijo (recomendación del asesor de seguridad de Supabase)
 do $$ declare r record; begin

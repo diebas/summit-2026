@@ -464,8 +464,8 @@ body.night .afilter{background:#120c26}
    "name": "Personalizados",
    "desc": "Hacete tu propio merch!",
    "color": "#7b4fb5",
-   "x": 18.5,
-   "z": -28
+   "x": 16.5,
+   "z": -42
   },
   {
    "id": "pmwbe662u",
@@ -532,28 +532,36 @@ body.night .afilter{background:#120c26}
    "color": "#e2b445",
    "points": [
     [
-     86,
-     -58.5
+     8.5,
+     -28
     ],
     [
-     10.5,
-     -59.5
+     -33,
+     -30
     ],
     [
-     9.5,
-     -28.5
+     -34,
+     -105
     ],
     [
-     -31,
-     -29.5
-    ],
-    [
-     -30.5,
-     -103.5
-    ],
-    [
-     90,
+     91.5,
      -104.5
+    ],
+    [
+     92,
+     11
+    ],
+    [
+     67,
+     12
+    ],
+    [
+     68,
+     -50.5
+    ],
+    [
+     13,
+     -51.5
     ]
    ]
   },
@@ -2461,7 +2469,7 @@ function renderInsc(sc){
     var pin=STATE.pins.filter(function(p){ return p.id===a.pin; })[0];
     h+='<section class="ins-card" style="--c:'+esc(pin?pin.color:"#e2b445")+'"><header><b>'+esc(a.nombre)+'</b>'+(pin?'<button type="button" class="linkbtn" data-pin="'+esc(pin.id)+'">Ver en el mapa</button>':'')+'</header>';
     if (a.grupo){ var others=d.talleres.filter(function(b){ return b.grupo===a.grupo && b.id!==a.id; }).map(function(b){ return b.nombre.replace(/^Taller de /,""); }); if (others.length) h+='<p class="ins-rule">Si te anotás acá no podés anotarte en '+esc(others.join(" ni "))+'. Media hora antes de cada turno se libera para todos si quedan lugares.</p>'; }
-    if (a.tipo==="cola") h+='<p class="ins-rule">Turnos de '+(a.slot_min||15)+' min de a '+(a.por_slot||1)+' personas, por orden de anotación. <b>El horario es tentativo:</b> estate atento cuando se acerque tu turno.</p>';
+    if (a.tipo==="cola") h+='<p class="ins-rule">'+((a.por_slot||1)>1 ? 'Turnos de '+(a.slot_min||15)+' min de a '+a.por_slot+' personas' : 'Unos '+(a.slot_min||15)+' min por persona')+', por orden de anotación. <b>El horario es tentativo:</b> estate atento cuando se acerque tu turno.</p>';
     a.turnos.forEach(function(t){
       var n=t.confirmados.length, free=Math.max(0,t.cupo-n), mineHere = myIn && myIn.turno===t.id;
       var btn='';

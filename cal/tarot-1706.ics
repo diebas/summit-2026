@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Summit 2026//Mapa Las Carretas//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:tarot-1706@summit-2026
+DTSTAMP:20261120T210639Z
+DTSTART:20261121T200600Z
+DTEND:20261121T201200Z
+SUMMARY:Tarot (aprox. 17:06)
+LOCATION:Establecimiento Las Carretas · Área de relax (pin Tarot)
+DESCRIPTION:Horario estimado según tu número en la lista: es tentativo\, estate atento cuando se acerque tu turno.\nMapa: https://diebas.github.io/summit-2026/
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Tarot (aprox. 17:06) en 15 minutos
+TRIGGER:-PT15M
+END:VALARM
+END:VEVENT
+END:VCALENDAR

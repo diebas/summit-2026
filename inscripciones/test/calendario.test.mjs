@@ -25,7 +25,7 @@ test('hay un .ics por turno con hora correcta (Montevideo = UTC-3) y alarma 15 m
   }
 });
 
-test('masajes: un .ics por cada turno estimado de 15 minutos', () => {
+test('listas sin horario fijo (masajes, tarot): un .ics por cada turno estimado', () => {
   for (const t of turnos.filter((t) => talleres[t.taller].tipo === 'cola')) {
     const a = talleres[t.taller], [h0, m0] = t.inicio.split(':').map(Number), [h1, m1] = t.fin.split(':').map(Number);
     let n = 0;
@@ -33,6 +33,6 @@ test('masajes: un .ics por cada turno estimado de 15 minutos', () => {
       const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0'), ics = leer(`${t.taller}-${hh}${mm}.ics`);
       assert.equal(campo(ics, 'DTSTART'), utc(`${hh}:${mm}`)); assert.match(ics, /tentativo/); n++;
     }
-    assert.equal(n, 16);
+    assert.equal(n, Math.ceil(((h1 * 60 + m1) - (h0 * 60 + m0)) / a.slot), t.taller); assert.ok(n > 0);
   }
 });

@@ -103,3 +103,13 @@ test('reintento con la misma clave: devuelve la misma inscripción, sin duplicar
   assert.equal((await A.anotar('reintento2@wyeworks.com', 'bartender-a', null, token())).error, 'ya_anotado', 'otra clave no se hace pasar');
   assert.ok(otro.ok);
 });
+
+test('tarot: 30 por orden de anotación, después espera; abierto hasta las 20', { skip }, async () => {
+  const r = [];
+  for (let i = 1; i <= 31; i++) r.push(await A.anotar(`t${i}@wyeworks.com`, 'tarot'));
+  assert.equal(r[29].estado, 'confirmado'); assert.equal(r[29].posicion, 30); assert.equal(r[30].estado, 'espera');
+  assert.equal((await A.anotar('sc@wyeworks.com', 'tarot')).estado, 'espera', 'no es excluyente con los talleres');
+  await at('19:59'); assert.equal((await A.anotar('t99@wyeworks.com', 'tarot')).estado, 'espera');
+  await at('20:00'); assert.equal((await A.anotar('t98@wyeworks.com', 'tarot')).error, 'cerrado');
+  await at('12:00');
+});
