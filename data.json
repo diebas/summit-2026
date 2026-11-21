@@ -39,8 +39,8 @@
    "name": "Futbol Burbuja",
    "desc": "Rebota Rebota Rebota",
    "color": "#e2b445",
-   "x": 54.5,
-   "z": -89.5
+   "x": -8.5,
+   "z": -65
   },
   {
    "id": "p6",
@@ -55,8 +55,8 @@
    "name": "Personalizados",
    "desc": "Hacete tu propio merch!",
    "color": "#7b4fb5",
-   "x": 16.5,
-   "z": -42
+   "x": 24,
+   "z": -27.5
   },
   {
    "id": "pmwbe662u",
@@ -87,32 +87,32 @@
    "name": "Futbol tenis",
    "desc": "",
    "color": "#e2b445",
-   "x": 56,
-   "z": -66.5
+   "x": 2.5,
+   "z": -60
   },
   {
    "id": "pmwjp38y7",
    "name": "Tejo",
    "desc": "",
    "color": "#e2b445",
-   "x": 32,
-   "z": -63.5
+   "x": -11,
+   "z": -48.5
   },
   {
    "id": "pmwmlzi53",
    "name": "Pool Ball",
    "desc": "",
    "color": "#e2b445",
-   "x": -1,
-   "z": -50.5
+   "x": -3,
+   "z": -43.5
   },
   {
    "id": "pmwmmbb4w",
    "name": "Jenga",
    "desc": "",
    "color": "#e2b445",
-   "x": 43.5,
-   "z": -67.5
+   "x": -9,
+   "z": -33.5
   }
  ],
  "examples": false,
@@ -368,8 +368,8 @@
  "gazebos": [
   {
    "id": "gmwkpcjs2",
-   "x": 49.5,
-   "z": -74.5,
+   "x": 56,
+   "z": -39,
    "rot": 0,
    "size": "4x4"
   },
@@ -384,6 +384,13 @@
    "id": "gmwkpd7mc",
    "x": 21.5,
    "z": -1.5,
+   "rot": 0,
+   "size": "4x4"
+  },
+  {
+   "id": "gmwqd5h1p",
+   "x": 50.5,
+   "z": 29,
    "rot": 0,
    "size": "4x4"
   }
