@@ -525,6 +525,14 @@ body.night .afilter{background:#120c26}
    "color": "#e2b445",
    "x": -9,
    "z": -33.5
+  },
+  {
+   "id": "pmwqe1hhx",
+   "name": "Caballos",
+   "desc": "",
+   "color": "#e2b445",
+   "x": -21.5,
+   "z": -82.5
   }
  ],
  "examples": false,
@@ -745,7 +753,8 @@ body.night .afilter{background:#120c26}
    "t": "18:00",
    "end": "20:00",
    "name": "Caballos",
-   "group": "a-juegos"
+   "group": "a-juegos",
+   "pin": "pmwqe1hhx"
   },
   {
    "t": "20:00",
@@ -1153,8 +1162,8 @@ fill([[-120,96],[-40,95],[-60,122],[-140,118]], 5.5, .75, .2);
 var CLEARED = [[41.5,-41.5,7],[59,-54.5,7],[2.5,-48,10]];
 /* escenas modeladas en los pines: el tipo sale del nombre de la atracción */
 function propKind(p){ var n=(p.name||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  if (/food ?truck/.test(n)) return "foodtrucks"; if (/arquer|arco/.test(n)) return "arqueria"; if (/burbuja/.test(n)) return "burbuja"; if (/samba/.test(n)) return "samba"; if (/futbol ?tenis|fut ?tenis|futenis/.test(n)) return "futenis"; if (/\btejo\b/.test(n)) return "tejo"; if (/personaliz/.test(n)) return "perso"; if (/bartender|tragos|cocteler/.test(n)) return "bar"; if (/sushi/.test(n)) return "sushi"; if (/pool ?ball|snook|futpool|foot ?pool/.test(n)) return "poolball"; return null; }
-var PROP_CLEAR = {foodtrucks:[[-5,-4,12],[-5,4,9],[3,-2,8]], arqueria:[[-6,5,5],[-6,-4,6],[-6,-13,5]], burbuja:[], samba:[[-3,-3.5,6.5]], futenis:[[-4,5,8],[4,5,8]], tejo:[[3,0,7.5],[3,-7,8]], perso:[[-3.5,-1,6]], bar:[[-3,0,4.5]], sushi:[[-3,0,4]], poolball:[[5.5,0,7.5]]};
+  if (/food ?truck/.test(n)) return "foodtrucks"; if (/arquer|arco/.test(n)) return "arqueria"; if (/burbuja/.test(n)) return "burbuja"; if (/samba/.test(n)) return "samba"; if (/futbol ?tenis|fut ?tenis|futenis/.test(n)) return "futenis"; if (/\btejo\b/.test(n)) return "tejo"; if (/personaliz/.test(n)) return "perso"; if (/bartender|tragos|cocteler/.test(n)) return "bar"; if (/sushi/.test(n)) return "sushi"; if (/pool ?ball|snook|futpool|foot ?pool/.test(n)) return "poolball"; if (/caball|equit|cabalgat/.test(n)) return "caballos"; return null; }
+var PROP_CLEAR = {foodtrucks:[[-5,-4,12],[-5,4,9],[3,-2,8]], arqueria:[[-6,5,5],[-6,-4,6],[-6,-13,5]], burbuja:[], samba:[[-3,-3.5,6.5]], futenis:[[-4,5,8],[4,5,8]], tejo:[[3,0,7.5],[3,-7,8]], perso:[[-3.5,-1,6]], bar:[[-3,0,4.5]], sushi:[[-3,0,4]], poolball:[[5.5,0,7.5]], caballos:[[-2,0,8.5]]};
 STATE.pins.forEach(function(p){ var k=propKind(p); if (k) PROP_CLEAR[k].forEach(function(c){ CLEARED.push([p.x+c[0], p.z+c[1], c[2]]); }); });
 // zona abierta entre el claro y el lugar despejado; quedan solo los árboles contra la cancha y contra el borde este
 var CLEARED_POLYS = [[[47,-69],[64,-69],[67,-60],[65,-45],[50,-41],[46,-52]]];
@@ -1876,6 +1885,63 @@ PROP_BUILD.poolball=function(){
     cue.rotation.z=-u*40;
     rack.forEach(function(o){ var q = u<.32 ? 0 : (u<.85 ? ease(Math.min(1,(u-.32)/.38)) : 1-(u-.85)/.15);
       o.b.position.lerpVectors(o.home, o.to, q); o.b.rotation.z=-q*6; o.b.rotation.x=q*4; });
+  };
+  return outer;
+};
+/* caballos: corral redondo con pista de arena; dos caballos dando vueltas (uno con jinete y guía) y uno pastando */
+function horse(col, mane){
+  var h=new THREE.Group(), c=lam(col), m=lam(mane), hoof=lam(0x2a2420);
+  var body=new THREE.Mesh(new THREE.CylinderGeometry(.36,.38,1.25,10), c); body.rotation.x=Math.PI/2; body.position.y=1.22; body.castShadow=true; h.add(body);
+  [-.62,.62].forEach(function(z){ var e=new THREE.Mesh(new THREE.SphereGeometry(.37,10,8), c); e.position.set(0,1.22,z); e.castShadow=true; h.add(e); });
+  /* cuello + cabeza + crin en un grupo que gira desde la cruz (para pastar o cabecear al caminar) */
+  var neckG=new THREE.Group(); neckG.position.set(0,1.38,.72); neckG.rotation.x=.62; h.add(neckG);
+  var neck=new THREE.Mesh(new THREE.BoxGeometry(.27,.9,.36), c); neck.position.y=.42; neck.castShadow=true; neckG.add(neck);
+  var maneM=new THREE.Mesh(new THREE.BoxGeometry(.08,.86,.12), m); maneM.position.set(0,.45,-.2); neckG.add(maneM);
+  var headG=new THREE.Group(); headG.position.set(0,.84,.02); headG.rotation.x=.18; neckG.add(headG);
+  var head=new THREE.Mesh(new THREE.BoxGeometry(.24,.26,.62), c); head.position.set(0,0,.24); head.castShadow=true; headG.add(head);
+  var muzzle=new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.14), m); muzzle.position.set(0,-.02,.58); headG.add(muzzle);
+  [-.07,.07].forEach(function(x){ var ear=new THREE.Mesh(new THREE.ConeGeometry(.045,.15,4), c); ear.position.set(x,.2,-.02); headG.add(ear); });
+  var tail=new THREE.Group(); tail.position.set(0,1.38,-.95); h.add(tail);
+  var tl=new THREE.Mesh(new THREE.CylinderGeometry(.035,.1,.8,6), m); tl.position.y=-.4; tl.rotation.x=.25; tail.add(tl);
+  var legG=new THREE.CylinderGeometry(.085,.065,1.02,6); legG.translate(0,-.51,0);
+  var legs=[[-.2,.6],[.2,.6],[-.2,-.58],[.2,-.58]].map(function(q){ var l=new THREE.Mesh(legG, c); l.position.set(q[0],1.04,q[1]); l.castShadow=true; h.add(l);
+    var hf=new THREE.Mesh(new THREE.BoxGeometry(.15,.08,.17), hoof); hf.position.y=-1.0; l.add(hf); return l; });
+  h.userData={legs:legs, neck:neckG, head:headG, tail:tail};
+  return h;
+}
+PROP_BUILD.caballos=function(){
+  var outer=new THREE.Group(), g=new THREE.Group(); g.position.set(-2,0,0); outer.add(g);
+  var wood=lam(0x8a6a44), R1=6.6, TR=4.4;
+  var sand=new THREE.Mesh(new THREE.RingGeometry(TR-1,TR+1,40), lam(0xcdb07a)); sand.rotation.x=-Math.PI/2; sand.position.y=.03; sand.receiveShadow=true; g.add(sand);
+  /* cerco de madera con tranquera abierta hacia el este */
+  for (var i=0;i<22;i++){ var a=i/22*Math.PI*2; if (Math.abs(a)<.15 || Math.abs(a-Math.PI*2)<.15) continue;
+    var post=new THREE.Mesh(new THREE.BoxGeometry(.12,1.25,.12), wood); post.position.set(Math.cos(a)*R1,.62,Math.sin(a)*R1); post.castShadow=true; g.add(post); }
+  [.55,1.05].forEach(function(y){ var rail=new THREE.Mesh(new THREE.TorusGeometry(R1,.05,4,64,Math.PI*2-.3), wood); rail.rotation.x=-Math.PI/2; rail.rotation.z=.15; rail.position.y=y; g.add(rail); });
+  /* fardo y balde de agua */
+  var bale=new THREE.Mesh(new THREE.BoxGeometry(1.1,.5,.6), lam(0xd9bd5a)); bale.position.set(-1.2,.25,-.6); bale.rotation.y=.4; bale.castShadow=true; g.add(bale);
+  var bucket=new THREE.Mesh(new THREE.CylinderGeometry(.25,.2,.35,10), lam(0x5a7a8a)); bucket.position.set(.6,.18,1.4); g.add(bucket);
+  /* dos caballos caminando por la pista */
+  var walkers=[];
+  [[0x6b3e1f,0x2a1a10,0],[0xe8e2d6,0x9a9488,Math.PI]].forEach(function(q,i){
+    var h=horse(q[0],q[1]); g.add(h);
+    var rider=null, guide=null;
+    if (i===0){ rider=person(0xe2b445, 0x2f3a4a); rider.scale.multiplyScalar(.72); rider.position.set(0,1.12,-.05); h.add(rider); rider.userData.arm(1,-.7,.15); rider.userData.arm(-1,-.7,-.15); }
+    guide=person(i?0x2f7fbf:0x8a2a2a, 0x2f3a4a); g.add(guide); var ga=guide.userData.arm(1,-.5,.25); guide.userData.arm(-1,0,-.08);
+    walkers.push({h:h, guide:guide, a0:q[2]});
+  });
+  /* uno pastando adentro */
+  var grazer=horse(0x3a2618,0x15100c); grazer.position.set(.8,0,-1.6); grazer.rotation.y=2.2; g.add(grazer);
+  grazer.userData.neck.rotation.x=2.35; grazer.userData.head.rotation.x=-.75;
+  outer.userData.anim=function(t){
+    var s=t/1000;
+    walkers.forEach(function(w,i){
+      var a=w.a0+s*.18, x=Math.cos(a)*TR, z=Math.sin(a)*TR;
+      w.h.position.set(x,0,z); w.h.rotation.y=-a;                      /* mira en la dirección de la vuelta */
+      var ph=s*5.2+i; w.h.userData.legs.forEach(function(l,k){ l.rotation.x=.35*Math.sin(ph+(k===0||k===3?0:Math.PI)); });
+      w.h.userData.neck.rotation.x=.62+.07*Math.sin(ph*2); w.h.userData.tail.rotation.z=.15*Math.sin(s*1.3+i);
+      var ga=a+.22, gr=TR-1.05; w.guide.position.set(Math.cos(ga)*gr,0,Math.sin(ga)*gr); w.guide.rotation.y=-a; w.guide.position.y=Math.abs(Math.sin(ph))*.04;
+    });
+    grazer.userData.neck.rotation.x=2.35+.06*Math.sin(s*.9); grazer.userData.tail.rotation.z=.2*Math.sin(s*1.7);
   };
   return outer;
 };

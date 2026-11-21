@@ -113,6 +113,14 @@
    "color": "#e2b445",
    "x": -9,
    "z": -33.5
+  },
+  {
+   "id": "pmwqe1hhx",
+   "name": "Caballos",
+   "desc": "",
+   "color": "#e2b445",
+   "x": -21.5,
+   "z": -82.5
   }
  ],
  "examples": false,
@@ -333,7 +341,8 @@
    "t": "18:00",
    "end": "20:00",
    "name": "Caballos",
-   "group": "a-juegos"
+   "group": "a-juegos",
+   "pin": "pmwqe1hhx"
   },
   {
    "t": "20:00",
