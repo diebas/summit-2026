@@ -1888,7 +1888,7 @@ PROP_BUILD.poolball=function(){
   };
   return outer;
 };
-/* caballos: corral redondo con pista de arena; dos caballos dando vueltas (uno con jinete y guía) y uno pastando */
+/* caballos: pista de arena redonda (sin cerco); dos caballos dando vueltas (uno con jinete y guía) y uno pastando */
 function horse(col, mane){
   var h=new THREE.Group(), c=lam(col), m=lam(mane), hoof=lam(0x2a2420);
   var body=new THREE.Mesh(new THREE.CylinderGeometry(.36,.38,1.25,10), c); body.rotation.x=Math.PI/2; body.position.y=1.22; body.castShadow=true; h.add(body);
@@ -1911,12 +1911,8 @@ function horse(col, mane){
 }
 PROP_BUILD.caballos=function(){
   var outer=new THREE.Group(), g=new THREE.Group(); g.position.set(-2,0,0); outer.add(g);
-  var wood=lam(0x8a6a44), R1=6.6, TR=4.4;
+  var TR=4.4;
   var sand=new THREE.Mesh(new THREE.RingGeometry(TR-1,TR+1,40), lam(0xcdb07a)); sand.rotation.x=-Math.PI/2; sand.position.y=.03; sand.receiveShadow=true; g.add(sand);
-  /* cerco de madera con tranquera abierta hacia el este */
-  for (var i=0;i<22;i++){ var a=i/22*Math.PI*2; if (Math.abs(a)<.15 || Math.abs(a-Math.PI*2)<.15) continue;
-    var post=new THREE.Mesh(new THREE.BoxGeometry(.12,1.25,.12), wood); post.position.set(Math.cos(a)*R1,.62,Math.sin(a)*R1); post.castShadow=true; g.add(post); }
-  [.55,1.05].forEach(function(y){ var rail=new THREE.Mesh(new THREE.TorusGeometry(R1,.05,4,64,Math.PI*2-.3), wood); rail.rotation.x=-Math.PI/2; rail.rotation.z=.15; rail.position.y=y; g.add(rail); });
   /* fardo y balde de agua */
   var bale=new THREE.Mesh(new THREE.BoxGeometry(1.1,.5,.6), lam(0xd9bd5a)); bale.position.set(-1.2,.25,-.6); bale.rotation.y=.4; bale.castShadow=true; g.add(bale);
   var bucket=new THREE.Mesh(new THREE.CylinderGeometry(.25,.2,.35,10), lam(0x5a7a8a)); bucket.position.set(.6,.18,1.4); g.add(bucket);
